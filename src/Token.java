@@ -9,4 +9,10 @@ public class Token {
 		this.value = value;
 		this.line = line;
 	}
+	
+	@Override
+	public String toString() {
+		String s = "Token " + this.kind + ", string " + this.value + ", line number " + this.line;
+		return s;
+	}
 }
