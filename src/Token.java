@@ -19,6 +19,10 @@ public class Token {
 		return (this.kind == t.kind) && this.value.equals(t.value) && (this.line == t.line);
 	}
 	
+	public Kind getKind() {
+		return this.kind;
+	}
+	
 	@Override
 	public String toString() {
 		String s = "Token " + this.kind + ", string " + this.value + ", line number " + this.line;
