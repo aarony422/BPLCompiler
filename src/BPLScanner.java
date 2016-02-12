@@ -86,7 +86,7 @@ public class BPLScanner {
 		return !isEOF;
 	}
 	
-	private void findNextChar() {
+	private void findNextChar() throws BPLScannerException {
 		if (!isEOF && endOfLine() || currLineNum == 0) {
 			readNextLine();
 		}
@@ -116,9 +116,13 @@ public class BPLScanner {
 				}
 			}
 		}
+		if (!isEOF && !endOfLine() && !inComment && isNextEndComment()) {
+			throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Single closing comments without opening comments (" + inputFileName + ":"+ currLineNum + ")");
+		}
 		if (!isEOF && (endOfLine() || isCurrSpace() || isNextComment())) {
 			findNextChar();
 		}
+		
 	}
 	
 	
@@ -183,7 +187,7 @@ public class BPLScanner {
 					} else {
 						String errorSource = currTokenValue.toString();
 						currTokenValue = new StringBuilder();
-						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Scanning symbol (" + inputFileName + ":"+ errorSource + ":" +currLineNum + ")");
+						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Invalid Symbol (" + inputFileName + ":"+ errorSource + ":" +currLineNum + ")");
 					}
 				}
 			}

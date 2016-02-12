@@ -25,7 +25,7 @@ public class Token {
 	
 	@Override
 	public String toString() {
-		String s = "Token " + this.kind + ", string " + this.value + ", line number " + this.line;
+		String s = "Token " + this.kind + ",\tstring " + this.value + ",\tline number " + this.line;
 		return s;
 	}
 }

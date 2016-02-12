@@ -1,0 +1,8 @@
+/* comments
+
+and then an end comment */
+int s = 23; */
+
+void main(void) {
+    write("Hello");
+}
