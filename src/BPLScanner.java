@@ -15,6 +15,8 @@ public class BPLScanner {
 	private StringBuilder currTokenValue;
 	private HashMap<String, Kind> keywordMap;
 	private HashMap<String, Kind> symbolMap;
+	private boolean isEOF;
+	private boolean inComment;
 	
 	public BPLScanner(String inputFileName) {
 		this.inputFileName = inputFileName;
@@ -24,6 +26,8 @@ public class BPLScanner {
 		this.currLine = "";
 		this.currIndex = 0;
 		this.currTokenValue = new StringBuilder();
+		this.isEOF = false;
+		this.inComment = false;
 		this.keywordMap = new HashMap<String, Kind>();
 		this.symbolMap = new HashMap<String, Kind>();
 		
@@ -36,11 +40,10 @@ public class BPLScanner {
 		}
 		
 		String[] symbols = {";", ",", "[", "]", "{", "}", "(", ")", "<", "<=", "==", "!=", ">=", ">", "+", "-", "*", 
-				"/", "=", "%", "&", "/*", "*/"};
+				"/", "=", "%", "&"};
 		Kind[] symbolKinds = {Kind.T_SEMICOLON, Kind.T_COMMA, Kind.T_LBRACKET, Kind.T_RBRACKET, Kind.T_LBRACE, Kind.T_RBRACE, 
 				Kind.T_LPAREN, Kind.T_RPAREN, Kind.T_LESS, Kind.T_LEQ, Kind.T_DOUBLEEQ, Kind.T_NEQ, Kind.T_GEQ, Kind.T_GREATER,
-				Kind.T_PLUS, Kind.T_MINUS, Kind.T_ASTERISK, Kind.T_FSLASH, Kind.T_EQ, Kind.T_PERCENT, Kind.T_AMPERSAND, Kind.T_LCOMMENT,
-				Kind.T_RCOMMENT};
+				Kind.T_PLUS, Kind.T_MINUS, Kind.T_ASTERISK, Kind.T_FSLASH, Kind.T_EQ, Kind.T_PERCENT, Kind.T_AMPERSAND};
 		
 		for (int i = 0; i < symbols.length; i++) {
 			symbolMap.put(symbols[i], symbolKinds[i]);
@@ -54,6 +57,8 @@ public class BPLScanner {
 		this.currLine = currLine;
 		this.currIndex = currIndex;
 		this.currTokenValue = new StringBuilder();
+		this.isEOF = false;
+		this.inComment = false;
 		this.keywordMap = new HashMap<String, Kind>();
 		this.symbolMap = new HashMap<String, Kind>();
 		
@@ -66,11 +71,10 @@ public class BPLScanner {
 		}
 		
 		String[] symbols = {";", ",", "[", "]", "{", "}", "(", ")", "<", "<=", "==", "!=", ">=", ">", "+", "-", "*", 
-				"/", "=", "%", "&", "/*", "*/"};
+				"/", "=", "%", "&"};
 		Kind[] symbolKinds = {Kind.T_SEMICOLON, Kind.T_COMMA, Kind.T_LBRACKET, Kind.T_RBRACKET, Kind.T_LBRACE, Kind.T_RBRACE, 
 				Kind.T_LPAREN, Kind.T_RPAREN, Kind.T_LESS, Kind.T_LEQ, Kind.T_DOUBLEEQ, Kind.T_NEQ, Kind.T_GEQ, Kind.T_GREATER,
-				Kind.T_PLUS, Kind.T_MINUS, Kind.T_ASTERISK, Kind.T_FSLASH, Kind.T_EQ, Kind.T_PERCENT, Kind.T_AMPERSAND, Kind.T_LCOMMENT,
-				Kind.T_RCOMMENT};
+				Kind.T_PLUS, Kind.T_MINUS, Kind.T_ASTERISK, Kind.T_FSLASH, Kind.T_EQ, Kind.T_PERCENT, Kind.T_AMPERSAND};
 		
 		for (int i = 0; i < symbols.length; i++) {
 			symbolMap.put(symbols[i], symbolKinds[i]);
@@ -82,82 +86,131 @@ public class BPLScanner {
 		return (nextToken.getKind() != Kind.T_EOF);
 	}
 	
-	public void getNextToken() throws BPLScannerException {
-		if (currLineNum == 0 || endOfLine() && currLine != null) {
+	private void findNextChar() {
+		if (!isEOF && endOfLine() || currLineNum == 0) {
 			readNextLine();
 		}
 		
-		while (isCurrSpace() && currLine != null) {
+		while (!isEOF && isCurrSpace()) {
 			if (endOfLine()) {
 				readNextLine();
 			}
-			while (!endOfLine() && isCurrSpace() && currLine != null) {
+			while (!isEOF && !endOfLine() && isCurrSpace()) {
 				currIndex++;
 			}
 		}
 		
-		if (currLine == null) {
-			nextToken = new Token(Kind.T_EOF, "EOF", currLineNum);
-			return;
-		}
-		
-		if (isCurrLetter()) {
-			while (!endOfLine() && (isCurrLetterOrDigit() || isCurrUnderScore())) {
-				currTokenValue.append(currChar());
-				currIndex++;
-			}
-			if (keywordMap.containsKey(currTokenValue.toString())) {
-				nextToken = new Token(keywordMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
-				currTokenValue = new StringBuilder();
-			} else {
-				nextToken = new Token(Kind.T_ID, currTokenValue.toString(), currLineNum);
-				currTokenValue = new StringBuilder();
-			}
-			
-		} else if (isCurrDigit()) {
-			while (!endOfLine() && isCurrDigit()) {
-				currTokenValue.append(currChar());
-				currIndex++;
-			}
-			nextToken = new Token(Kind.T_NUM, currTokenValue.toString(), currLineNum);
-			currTokenValue = new StringBuilder();
-		} else {
-			currTokenValue.append(currChar());
-			currIndex++;
-			if (!endOfLine()) {
-				currTokenValue.append(currChar());
-				currIndex++;
-			}
-			if (currTokenValue.length() == 2 && symbolMap.containsKey(currTokenValue.toString())) {
-				nextToken = new Token(symbolMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
-				currTokenValue = new StringBuilder();
-			} else {
-				if (currTokenValue.length() == 2) {
-					currTokenValue.setLength(currTokenValue.length()-1);
-					currIndex--;
+		if (!isEOF && isNextComment()) {
+			inComment = true;
+			while(!isEOF && inComment) {
+				if (endOfLine()) {
+					readNextLine();
 				}
-				if (symbolMap.containsKey(currTokenValue.toString())) {
+				while (!isEOF && !endOfLine() && inComment) {
+					if (isCurrStar()) {
+						inComment = !isNextEndComment();
+					} else {
+						currIndex++;
+					}
+				}
+			}
+		}
+		if (!isEOF && (isCurrSpace() || isNextComment())) {
+			findNextChar();
+		}
+	}
+	
+	
+	public void getNextToken() throws BPLScannerException {
+		
+		findNextChar();
+		if (!isEOF) {
+			if (isCurrLetter()) {
+				while (!endOfLine() && (isCurrLetterOrDigit() || isCurrUnderScore())) {
+					currTokenValue.append(currChar());
+					currIndex++;
+				}
+				if (keywordMap.containsKey(currTokenValue.toString())) {
+					nextToken = new Token(keywordMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
+					currTokenValue = new StringBuilder();
+				} else {
+					nextToken = new Token(Kind.T_ID, currTokenValue.toString(), currLineNum);
+					currTokenValue = new StringBuilder();
+				}
+				
+			} else if (isCurrDigit()) {
+				while (!endOfLine() && isCurrDigit()) {
+					currTokenValue.append(currChar());
+					currIndex++;
+				}
+				nextToken = new Token(Kind.T_NUM, currTokenValue.toString(), currLineNum);
+				currTokenValue = new StringBuilder();
+			} else {
+				currTokenValue.append(currChar());
+				currIndex++;
+				if (!endOfLine()) {
+					currTokenValue.append(currChar());
+					currIndex++;
+				}
+				if (currTokenValue.length() == 2 && symbolMap.containsKey(currTokenValue.toString())) {
 					nextToken = new Token(symbolMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
 					currTokenValue = new StringBuilder();
-				} else if (currTokenValue.toString().equals("\"")){
-					currTokenValue.setLength(0);
-					while (!endOfLine() && !isCurrQuote()) {
-						currTokenValue.append(currChar());
-						currIndex++;
-					}
-					
-					if (!endOfLine()) {
-						currIndex++;
-						nextToken = new Token(Kind.T_STRING, currTokenValue.toString(), currLineNum);
-						currTokenValue = new StringBuilder();
-					} else {
-						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Unclosed quotes or unallowed multi-line string (" + inputFileName + ":"+ currLineNum + ")");
-					}
 				} else {
-					throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Scanning symbol (" + inputFileName + ":"+ currLineNum + ")");
+					if (currTokenValue.length() == 2) {
+						currTokenValue.setLength(currTokenValue.length()-1);
+						currIndex--;
+					}
+					if (symbolMap.containsKey(currTokenValue.toString())) {
+						nextToken = new Token(symbolMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
+						currTokenValue = new StringBuilder();
+					} else if (currTokenValue.toString().equals("\"")){
+						currTokenValue.setLength(0);
+						while (!endOfLine() && !isCurrQuote()) {
+							currTokenValue.append(currChar());
+							currIndex++;
+						}
+						
+						if (!endOfLine()) {
+							currIndex++;
+							nextToken = new Token(Kind.T_STRING, currTokenValue.toString(), currLineNum);
+							currTokenValue = new StringBuilder();
+						} else {
+							throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Unclosed quotes or unallowed multi-line string (" + inputFileName + ":"+ currLineNum + ")");
+						}
+					} else {
+						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Scanning symbol (" + inputFileName + ":"+ currLineNum + ")");
+					}
 				}
 			}
 		}
+	}
+	
+	private boolean isNextComment() {
+		boolean isComment = false;
+		if (currIndex + 1 < currLine.length()) {
+			isComment = (currChar() == '/') && (currLine.charAt(currIndex+1) == '*');
+		}
+		if (isComment) {
+			currIndex += 2;
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isNextEndComment() {
+		boolean isEnd = false;
+		if (currIndex +1 < currLine.length()) {
+			isEnd = isCurrStar() && (currLine.charAt(currIndex+1) == '/');
+		}
+		if (isEnd) {
+			currIndex += 2;
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isCurrStar() {
+		return currChar() == '*';
 	}
 	
 	private boolean isCurrQuote() {
@@ -193,14 +246,20 @@ public class BPLScanner {
 	}
 	
 	private void readNextLine() {
-		try {
-			currLine = bufferedReader.readLine();
-		} catch (IOException e) {
-			System.out.println("Error: Error reading file '" + inputFileName + "'");
-			System.exit(1);
+		if (currLine != null) {
+			try {
+				currLine = bufferedReader.readLine();
+			} catch (IOException e) {
+				System.out.println("Error: Error reading file '" + inputFileName + "'");
+				System.exit(1);
+			}
+			currLineNum++;
+			currIndex = 0;
 		}
-		currLineNum++;
-		currIndex = 0;
+		if (currLine == null) {
+			nextToken = new Token(Kind.T_EOF, "EOF", currLineNum);
+			isEOF = true;
+		}
 	}
 	
 	private BufferedReader getBufferedReader() {

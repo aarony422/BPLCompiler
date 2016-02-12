@@ -177,6 +177,35 @@ public class BPLScannerTest {
 		assertEquals(correctToken, testToken);
 	}
 	
+	@Test
+	public void Scancomments() {
+		BPLScanner scanner = new BPLScanner(2, "/*Hello World*/   /*more commentsssss   */      stuff", 0);
+		try {
+			scanner.getNextToken();
+		} catch (BPLScannerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Token correctToken = new Token(Kind.T_ID, "stuff", 2);
+		Token testToken = scanner.nextToken;
+		assertEquals(correctToken, testToken);
+	}
+	
+	@Test
+	public void Scancomments2() {
+		BPLScanner scanner = new BPLScanner(2, "/*Hello World*/   /*more commentsssss   */      stuff    int", 0);
+		try {
+			scanner.getNextToken();
+			scanner.getNextToken();
+		} catch (BPLScannerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Token correctToken = new Token(Kind.T_INT, "int", 2);
+		Token testToken = scanner.nextToken;
+		assertEquals(correctToken, testToken);
+	}
+	
 	@Test(expected=BPLScannerException.class)
 	public void ScanThrowsBPLScannerException() throws BPLScannerException {
 		BPLScanner scanner = new BPLScanner(2, "num!", 0);
