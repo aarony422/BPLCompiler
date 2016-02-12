@@ -1,0 +1,10 @@
+/* testing string that ends without closing quotes */
+
+string s = "hello;
+
+void main(void) {
+    string s = "hello";
+    return s;
+}
+
+'*|!=

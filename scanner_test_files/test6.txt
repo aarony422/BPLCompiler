@@ -1,0 +1,15 @@
+/* testing multi line
+comments because that is all the rage! * stuff /
+stuff */
+
+int factorial(int a, int b) {
+    int n;
+    int total;
+    n = a;
+    total = 0;
+    while (n <= b) {
+        total = total + n;
+        n = n + 1;
+    }
+    return total;
+}

@@ -83,7 +83,7 @@ public class BPLScanner {
 	
 	// TODO: hasNextToken
 	public boolean hasNextToken() {
-		return (nextToken.getKind() != Kind.T_EOF);
+		return !isEOF;
 	}
 	
 	private void findNextChar() {
@@ -91,7 +91,7 @@ public class BPLScanner {
 			readNextLine();
 		}
 		
-		while (!isEOF && isCurrSpace()) {
+		while (!isEOF && !endOfLine() && isCurrSpace()) {
 			if (endOfLine()) {
 				readNextLine();
 			}
@@ -100,7 +100,7 @@ public class BPLScanner {
 			}
 		}
 		
-		if (!isEOF && isNextComment()) {
+		if (!isEOF && !endOfLine() && isNextComment()) {
 			inComment = true;
 			while(!isEOF && inComment) {
 				if (endOfLine()) {
@@ -109,13 +109,14 @@ public class BPLScanner {
 				while (!isEOF && !endOfLine() && inComment) {
 					if (isCurrStar()) {
 						inComment = !isNextEndComment();
-					} else {
+					}
+					if (inComment) {
 						currIndex++;
 					}
 				}
 			}
 		}
-		if (!isEOF && (isCurrSpace() || isNextComment())) {
+		if (!isEOF && (endOfLine() || isCurrSpace() || isNextComment())) {
 			findNextChar();
 		}
 	}
@@ -152,7 +153,7 @@ public class BPLScanner {
 					currTokenValue.append(currChar());
 					currIndex++;
 				}
-				if (currTokenValue.length() == 2 && symbolMap.containsKey(currTokenValue.toString())) {
+				if (symbolMap.containsKey(currTokenValue.toString())) {
 					nextToken = new Token(symbolMap.get(currTokenValue.toString()), currTokenValue.toString(), currLineNum);
 					currTokenValue = new StringBuilder();
 				} else {
@@ -175,10 +176,14 @@ public class BPLScanner {
 							nextToken = new Token(Kind.T_STRING, currTokenValue.toString(), currLineNum);
 							currTokenValue = new StringBuilder();
 						} else {
-							throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Unclosed quotes or unallowed multi-line string (" + inputFileName + ":"+ currLineNum + ")");
+							String errorSource = currTokenValue.toString();
+							currTokenValue = new StringBuilder();
+							throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Unclosed quotes or unallowed multi-line string (" + inputFileName + ":"+ errorSource + ":" + currLineNum + ")");
 						}
 					} else {
-						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Scanning symbol (" + inputFileName + ":"+ currLineNum + ")");
+						String errorSource = currTokenValue.toString();
+						currTokenValue = new StringBuilder();
+						throw new BPLScannerException("Scanner Error: at BPLScanner.getNextToken: Scanning symbol (" + inputFileName + ":"+ errorSource + ":" +currLineNum + ")");
 					}
 				}
 			}
@@ -265,10 +270,10 @@ public class BPLScanner {
 	private BufferedReader getBufferedReader() {
 		BufferedReader bufferedReader = null;
 		try {
-			FileReader filereader = new FileReader(this.inputFileName);
+			FileReader filereader = new FileReader(inputFileName);
 			bufferedReader = new BufferedReader(filereader);
 		} catch (FileNotFoundException e) {
-			System.out.println("Error: Unable to open file '" + this.inputFileName + "'");
+			System.out.println("Error: Unable to open file '" + inputFileName + "'");
 			System.exit(1);
 		}
 		return bufferedReader;

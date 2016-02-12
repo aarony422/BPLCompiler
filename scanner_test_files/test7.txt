@@ -1,0 +1,8 @@
+/* A file with unclosed comments
+what will this one do? I wonder * this should
+all be nothing ness!!!
+
+void main(void) {
+    string s = "hello";
+    write(s);
+}
