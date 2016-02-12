@@ -1,3 +1,10 @@
+/* Program takes the name of a BPL file, opens file, and repeatedly calls
+ * getNextToken(), printing each token found until it gets to the end of the
+ * file.
+ * 
+ * Name: Aaron (Shang Wei) Young
+ * CSCI 331 Compilers Spring 2016
+*/
 
 public class ScannerTest {
 

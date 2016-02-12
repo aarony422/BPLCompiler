@@ -1,3 +1,9 @@
+/* Token object that stores the Kind, String value, and the line number it was 
+ * found. 
+ * 
+ * Name: Aaron (Shang Wei) Young
+ * CSCI 331 Compilers Spring 2016
+*/
 
 public class Token {
 	private Kind kind;

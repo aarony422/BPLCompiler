@@ -1,3 +1,11 @@
+/* Scanner for BPL that is initialized with the FileName as a parameter.
+ * Call hasNextToken() to check if there exists a next token.
+ * public instance variable nextToken stores the next Token in the file.
+ * 
+ * Name: Aaron (Shang Wei) Young
+ * CSCI 331 Compilers Spring 2016
+*/
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

@@ -1,4 +1,8 @@
-
+/* enum class that defines all token kinds, and initialize them with an integer ID
+ * 
+ * Name: Aaron (Shang Wei) Young
+ * CSCI 331 Compilers Spring 2016
+*/
 public enum Kind {
 	// All Kinds list here. i.e. T_String(1)
 	T_ID(0),
