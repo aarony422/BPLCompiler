@@ -16,6 +16,14 @@ public class Token {
 		this.line = line;
 	}
 	
+	public String getValue() {
+		return this.value;
+	}
+	
+	public int getLine() {
+		return this.line;
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof Token)) { return false; }
