@@ -6,11 +6,13 @@
  * CSCI 331 Compilers Spring 2016
 */
 
+
+
 public class ScannerTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String inputFileName = "sample_programs/selectionSort.bpl";
+		String inputFileName = "scanner_test_files/test10.txt";
 		BPLScanner scanner;
 		
 		//inputFileName = args[0];
