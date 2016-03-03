@@ -9,7 +9,9 @@ public enum TreeNodeKind {
 	STATEMENT_LIST(6),
 	EMPTY(7),
 	WHILE_STMT(8),
-	IF_STMT(9);
+	IF_STMT(9),
+	RETURN_STMT(10),
+	WRITE_STMT(11);
 	
 	
 	private int id;

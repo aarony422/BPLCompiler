@@ -28,6 +28,11 @@ public class BPLParser {
 			stmt = whileStatement();
 		} else if (token.getKind() == Kind.T_IF){
 			stmt = ifStatement();
+		} else if (token.getKind() == Kind.T_RETURN) {
+			stmt = returnStatement();
+		} else if (token.getKind() == Kind.T_WRITE || token.getKind() == Kind.T_WRITELN) {
+			cacheToken(token);
+			stmt = writeStatement();
 		} else {
 			cacheToken(token);
 			stmt = expressionStatement();
@@ -73,7 +78,7 @@ public class BPLParser {
 		TreeNode expression = expression();
 		token = getNextToken();
 		if (token.getKind() != Kind.T_RPAREN) {
-			throw new BPLParserException("Parser Error: at BPLParser.whileStatement: Expected ) but got " + token.getKind() + " on line " + token.getLine());
+			throw new BPLParserException("Parser Error: at BPLParser.ifStatement: Expected ) but got " + token.getKind() + " on line " + token.getLine());
 		}
 		TreeNode stmt = statement();
 		ifStmt.addChild(expression);
@@ -88,13 +93,64 @@ public class BPLParser {
 		return ifStmt;
 	}
 	
-	private TreeNode statementList() throws BPLParserException {
+	private TreeNode returnStatement() throws BPLParserException {
+		TreeNode returnStmt = new TreeNode(TreeNodeKind.RETURN_STMT, currLine, null);
 		Token token = getNextToken();
-		if (token.getKind() == Kind.T_RBRACE) {
-			cacheToken(token);
-			return new TreeNode(TreeNodeKind.EMPTY, token.getLine(), null);
+		if (token.getKind() == Kind.T_SEMICOLON) {
+			return returnStmt;
 		}
 		cacheToken(token);
+		TreeNode expression = expression();
+		token = getNextToken();
+		if (token.getKind() != Kind.T_SEMICOLON) {
+			throw new BPLParserException("Parser Error: at BPLParser.returnStatement: Expected ; but got " + token.getKind() + " on line " + token.getLine());
+		}
+		returnStmt.addChild(expression);
+		return returnStmt;
+	}
+	
+	private TreeNode writeStatement() throws BPLParserException {
+		TreeNode writeStmt = new TreeNode(TreeNodeKind.WRITE_STMT, currLine, null);
+		Token token = getNextToken();
+		
+		if (token.getKind() == Kind.T_WRITE) {
+			token = getNextToken();
+			if (token.getKind() != Kind.T_LPAREN) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ( but got " + token.getKind() + " on line " + token.getLine());
+			}
+			TreeNode expression = expression();
+			token = getNextToken();
+			if (token.getKind() != Kind.T_RPAREN) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ) but got " + token.getKind() + " on line " + token.getLine());
+			}
+			token = getNextToken();
+			if (token.getKind() != Kind.T_SEMICOLON) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ; but got " + token.getKind() + " on line " + token.getLine());
+			}
+			writeStmt.addChild(expression);
+		} else {
+			token = getNextToken();
+			if (token.getKind() != Kind.T_LPAREN) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ( but got " + token.getKind() + " on line " + token.getLine());
+			}
+			token = getNextToken();
+			if (token.getKind() != Kind.T_RPAREN) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ) but got " + token.getKind() + " on line " + token.getLine());
+			}
+			token = getNextToken();
+			if (token.getKind() != Kind.T_SEMICOLON) {
+				throw new BPLParserException("Parser Error: at BPLParser.writeStatement: Expected ; but got " + token.getKind() + " on line " + token.getLine());
+			}
+		}
+		return writeStmt;
+	}
+	
+	private TreeNode statementList() throws BPLParserException {
+		Token token = getNextToken();
+		cacheToken(token);
+		if (token.getKind() == Kind.T_RBRACE) {
+			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
+		}
 		TreeNode statementList = new TreeNode(TreeNodeKind.STATEMENT_LIST, currLine, null);
 		TreeNode statement = statement();
 		TreeNode statementList2 = statementList();
@@ -124,7 +180,6 @@ public class BPLParser {
 	private TreeNode expression() throws BPLParserException {
 		TreeNode expression = new TreeNode(TreeNodeKind.EXPRESSION, currLine, null);
 		TreeNode id = id();
-		expression.setLine(id.getLine());
 		expression.addChild(id);
 		return expression;
 	}
@@ -137,7 +192,7 @@ public class BPLParser {
 		if (token.getKind() == Kind.T_ID) {
 			id = new TreeNode(TreeNodeKind.ID, token.getLine(), token.getValue());
 		} else {
-			throw new BPLParserException("Parser Error: at BPLParser.expression: Expected <id> but got " + token.getKind() + " on line " + line);
+			throw new BPLParserException("Parser Error: at BPLParser.id: Expected <id> but got " + token.getKind() + " on line " + line);
 		}
 		return id;
 	}
