@@ -40,7 +40,7 @@ public class TreeNode {
 	
 	@Override
 	public String toString() {
-		String s = this.kind + ", string " + this.value + ", line number " + this.line + " ";
+		String s = this.kind + ", string: " + this.value + ", line: " + this.line + " ";
 		return s;
 	}
 }
