@@ -11,13 +11,13 @@ public class ParserTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String inputFileName = "parser_test_files/test7.bpl";
+		String inputFileName = "parser_test_files/test5.bpl";
 		BPLParser parser = new BPLParser(inputFileName);
 		TreeNode node = null;
 		try {
 			node = parser.parse();
 		} catch (BPLParserException e) {
-			System.out.println(e);
+			e.printStackTrace();
 		}
 		
 		// TODO: Print Tree
