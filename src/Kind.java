@@ -9,7 +9,7 @@ public enum Kind {
 	T_NUM(1),
 	T_INT(2),
 	T_VOID(3),
-	T_STR(4), // string
+	T_STR(4), // string type
 	T_IF(5),
 	T_ELSE(6),
 	T_WHILE(7),
