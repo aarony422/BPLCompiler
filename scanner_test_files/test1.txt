@@ -1,1 +1,2 @@
 if(num<23)
+int x, string y,

@@ -64,26 +64,38 @@ public class BPLParser {
 	}
 	
 	private TreeNode varDec() throws BPLParserException {
-		TreeNode varDec = new TreeNode(TreeNodeKind.VAR_DEC, currLine, null);
+		int line = currLine;
+		TreeNode varDec = null;
 		TreeNode type = typeSpecifier();
-		varDec.addChild(type);
+		//varDec.addChild(type);
 		Token token = getNextToken();
 		if (token.getKind() == Kind.T_ASTERISK) {
-			TreeNode asterisk = new TreeNode(TreeNodeKind.ASTERISK, currLine, token.getValue());
-			varDec.addChild(asterisk);
+			varDec = new TreeNode(TreeNodeKind.POINTER_VAR_DEC, line, null);
+			varDec.addChild(type);
 		} else {
 			cacheTokenFirst(token);
 		}
 		TreeNode id = id();
-		varDec.addChild(id);
+		//varDec.addChild(id);
 		token = getNextToken();
 		if (token.getKind() == Kind.T_LBRACKET) {
+			varDec = new TreeNode(TreeNodeKind.ARRAY_VAR_DEC, line, null);
 			TreeNode num = num();
 			token = getNextToken();
 			assertToken(token, Kind.T_RBRACKET, "]");
+			varDec.addChild(type);
+			varDec.addChild(id);
 			varDec.addChild(num);
 			token = getNextToken();
 		}
+		if (varDec == null) {
+			varDec = new TreeNode(TreeNodeKind.VAR_DEC, line, null);
+			varDec.addChild(type);
+			varDec.addChild(id);
+		} else if (varDec.getKind() == TreeNodeKind.POINTER_VAR_DEC) {
+			varDec.addChild(id);
+		}
+		
 		assertToken(token, Kind.T_SEMICOLON, ";");
 		return varDec;
 	}
@@ -167,6 +179,7 @@ public class BPLParser {
 			TreeNode v = new TreeNode(TreeNodeKind.VOID, currLine, token.getValue());
 			params.addChild(v);
 		} else {
+			cacheToken(token);
 			TreeNode paramList = paramList();
 			params.addChild(paramList);
 		}
@@ -180,10 +193,15 @@ public class BPLParser {
 			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
 		}
 		TreeNode paramList = new TreeNode(TreeNodeKind.PARAM_LIST, currLine, null);
-		token = getNextToken();
-		assertToken(token, Kind.T_COMMA, ",");
 		TreeNode param = param();
+		token = getNextToken();
+		if (token.getKind() == Kind.T_RPAREN) {
+			cacheToken(token);
+		} else {
+			assertToken(token, Kind.T_COMMA, ",");
+		}
 		TreeNode paramList2 = paramList();
+
 		paramList.addChild(paramList2);
 		paramList.addChild(param);
 		return paramList;
@@ -205,6 +223,8 @@ public class BPLParser {
 			param = new TreeNode(TreeNodeKind.ARRAY_PARAM, line, null);
 			token = getNextToken();
 			assertToken(token, Kind.T_RBRACKET, "]");
+		} else {
+			cacheTokenFirst(token);
 		}
 		if (param == null) {
 			param = new TreeNode(TreeNodeKind.PARAM, line, null);

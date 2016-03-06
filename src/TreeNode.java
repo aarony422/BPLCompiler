@@ -25,6 +25,10 @@ public class TreeNode {
 		return this.line;
 	}
 	
+	public TreeNodeKind getKind() {
+		return this.kind;
+	}
+	
 	public void setLine(int line) {
 		this.line = line;
 	}

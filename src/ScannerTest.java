@@ -12,7 +12,7 @@ public class ScannerTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String inputFileName = "scanner_test_files/test10.txt";
+		String inputFileName = "scanner_test_files/test1.txt";
 		BPLScanner scanner;
 		
 		//inputFileName = args[0];
