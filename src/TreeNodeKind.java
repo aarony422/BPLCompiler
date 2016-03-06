@@ -19,7 +19,9 @@ public enum TreeNodeKind {
 	LOCAL_DECS(16),
 	VAR_DEC(17),
 	ASTERISK(18),
-	NUM(19);
+	NUM(19),
+	DECLARATION_LIST(20),
+	DECLARATION(21);
 	
 	
 	private int id;
