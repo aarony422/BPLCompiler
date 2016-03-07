@@ -49,7 +49,7 @@ public class Token {
 	
 	@Override
 	public String toString() {
-		String s = "Token " + this.kind + ",\tstring " + this.value + ",\tline number " + this.line + "ID: " + this.id;
+		String s = "Token " + this.kind + ",\tstring " + this.value + ",\tline number " + this.line + " ID: " + this.id;
 		return s;
 	}
 }

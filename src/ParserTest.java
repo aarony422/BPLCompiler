@@ -11,7 +11,7 @@ public class ParserTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String inputFileName = "parser_test_files/test8.bpl";
+		String inputFileName = "parser_test_files/test10.bpl";
 		BPLParser parser = new BPLParser(inputFileName);
 		TreeNode node = null;
 		try {
@@ -43,5 +43,4 @@ public class ParserTest {
 		}
 		System.out.println("}");
 	}
-
 }

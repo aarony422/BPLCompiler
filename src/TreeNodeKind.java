@@ -29,7 +29,21 @@ public enum TreeNodeKind {
 	POINTER_PARAM(26),
 	ARRAY_PARAM(27),
 	POINTER_VAR_DEC(28),
-	ARRAY_VAR_DEC(29);
+	ARRAY_VAR_DEC(29),
+	RELOP(30),
+	ADDOP(31),
+	MULOP(32),
+	EQ_REL_OP(33),
+	ARITHM_OP(34),
+	ASSIGN_EXP(35),
+	ARRAY_VAR(36),
+	POINTER_VAR(37),
+	VAR(38),
+	COMP_EXP(39),
+	E(40),
+	T(41),
+	F(42),
+	FACTOR(43);
 	
 	
 	private int id;
