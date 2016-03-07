@@ -73,7 +73,7 @@ public class BPLParser {
 			varDec = new TreeNode(TreeNodeKind.POINTER_VAR_DEC, line, null);
 			varDec.addChild(type);
 		} else {
-			cacheTokenFirst(token);
+			cacheToken(token);
 		}
 		TreeNode id = id();
 		//varDec.addChild(id);
@@ -215,7 +215,7 @@ public class BPLParser {
 		if (token.getKind() == Kind.T_ASTERISK) {
 			param = new TreeNode(TreeNodeKind.POINTER_PARAM, line, null);
 		} else {
-			cacheTokenFirst(token);
+			cacheToken(token);
 		}
 		TreeNode id = id();
 		token = getNextToken();
@@ -224,7 +224,7 @@ public class BPLParser {
 			token = getNextToken();
 			assertToken(token, Kind.T_RBRACKET, "]");
 		} else {
-			cacheTokenFirst(token);
+			cacheToken(token);
 		}
 		if (param == null) {
 			param = new TreeNode(TreeNodeKind.PARAM, line, null);
@@ -408,12 +408,15 @@ public class BPLParser {
 		return scanner.nextToken;
 	}
 	
-	private void cacheToken(Token t) throws BPLParserException {
-		tokenCache.add(t);
-	}
-	
-	private void cacheTokenFirst(Token t) throws BPLParserException {
-		tokenCache.addFirst(t);
+	private void cacheToken(Token t) throws BPLParserException {		
+		int index = 0;
+		int size = tokenCache.size();
+		for (; index < size; index++) {
+			if (tokenCache.get(index).getID() > t.getID()) {
+				break;
+			}
+		}
+		tokenCache.add(index, t);
 	}
 	
 	private void printCache() {
