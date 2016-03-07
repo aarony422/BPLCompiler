@@ -1,3 +1,5 @@
+import java.util.concurrent.atomic.AtomicInteger;
+
 /* Token object that stores the Kind, String value, and the line number it was 
  * found. 
  * 
@@ -6,14 +8,22 @@
 */
 
 public class Token {
+	static AtomicInteger nextId = new AtomicInteger();
+	
 	private Kind kind;
 	private String value;
 	private int line;
+	private final int id;
 	
 	public Token(Kind kind, String value, int line) {
 		this.kind = kind;
 		this.value = value;
 		this.line = line;
+		this.id = nextId.incrementAndGet();
+	}
+	
+	public int getID() {
+		return this.id;
 	}
 	
 	public String getValue() {
@@ -39,7 +49,7 @@ public class Token {
 	
 	@Override
 	public String toString() {
-		String s = "Token " + this.kind + ",\tstring " + this.value + ",\tline number " + this.line;
+		String s = "Token " + this.kind + ",\tstring " + this.value + ",\tline number " + this.line + "ID: " + this.id;
 		return s;
 	}
 }
