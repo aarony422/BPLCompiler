@@ -49,7 +49,9 @@ public enum TreeNodeKind {
 	DEREF_F(46),
 	READ(47),
 	FUN_CALL(48),
-	ARRAY_FACTOR(49);
+	ARRAY_FACTOR(49),
+	ARGS(50),
+	ARG_LIST(51);
 	
 	
 	private int id;

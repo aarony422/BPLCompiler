@@ -171,8 +171,8 @@ public class BPLParser {
 		funDec.addChild(params);
 		TreeNode compoundStmt = compoundStatement();
 		funDec.addChild(compoundStmt);
-		token = getNextToken();
-		assertToken(token, Kind.T_RBRACE, "}");
+		//token = getNextToken();
+		//assertToken(token, Kind.T_RBRACE, "}");
 		return funDec;
 	}
 	
@@ -256,8 +256,8 @@ public class BPLParser {
 			token = getNextToken();
 			compoundStmt.addChild(statementList);
 		}
+		token = getNextToken();
 		assertToken(token, Kind.T_RBRACE, "}");
-		cacheToken(token);
 		return compoundStmt;
 	}
 	
@@ -286,6 +286,7 @@ public class BPLParser {
 		ifStmt.addChild(stmt);
 		token = getNextToken();
 		if (token.getKind() != Kind.T_ELSE) {
+			cacheToken(token);
 			return ifStmt;
 		}
 		TreeNode elseStmt = statement();
@@ -335,6 +336,7 @@ public class BPLParser {
 		Token token = getNextToken();
 		cacheToken(token);
 		if (token.getKind() == Kind.T_RBRACE) {
+			cacheToken(token);
 			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
 		}
 		TreeNode statementList = new TreeNode(TreeNodeKind.STATEMENT_LIST, currLine, null);
@@ -571,6 +573,11 @@ public class BPLParser {
 				factor = new TreeNode(TreeNodeKind.ARRAY_FACTOR, currLine, null);
 				factor.addChild(id);
 				factor.addChild(exp);
+			} else if (token2.getKind() == Kind.T_LPAREN) { // funCall
+				cacheToken(token);
+				factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
+				TreeNode funCall = funCall();
+				factor.addChild(funCall);
 			} else {
 				factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
 				cacheToken(token);
@@ -582,23 +589,21 @@ public class BPLParser {
 			TreeNode exp = expression();
 			token = getNextToken();
 			assertToken(token, Kind.T_RPAREN, ")");
-			cacheToken(token);
+			//cacheToken(token);
 			factor.addChild(exp);
 		} else { // FUN_CALL
-			factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
-			//TreeNode funCall = funCall();
-			//factor.addChild(funCall);
+			System.out.println("Something Went Wrong");
+			System.exit(1);
 		}
 		//System.out.println("Current Token: " + token);
 		//printCache();
 		return factor;
 	}
-	/*
-	private TreeNode funCalll() throws BPLParserException {
+	
+	private TreeNode funCall() throws BPLParserException {
 		TreeNode funCall = new TreeNode(TreeNodeKind.FUN_CALL, currLine, null);
-		Token token = getNextToken();
 		TreeNode id = id();
-		token = getNextToken();
+		Token token = getNextToken();
 		assertToken(token, Kind.T_LPAREN, "(");
 		TreeNode args = args();
 		token = getNextToken();
@@ -608,8 +613,40 @@ public class BPLParser {
 		return funCall;
 	}
 	
-	*/
-
+	private TreeNode args() throws BPLParserException {
+		TreeNode args = new TreeNode(TreeNodeKind.ARGS, currLine, null);
+		Token token = getNextToken();
+		if (token.getKind() == Kind.T_RPAREN) {
+			TreeNode empty = new TreeNode(TreeNodeKind.EMPTY, currLine, null);
+			args.addChild(empty);
+			cacheToken(token);
+		} else {
+			cacheToken(token);
+			TreeNode argList = argList();
+			args.addChild(argList);
+		}
+		return args;
+	}
+	
+	private TreeNode argList() throws BPLParserException {
+		Token token = getNextToken();
+		cacheToken(token);
+		if (token.getKind() == Kind.T_RPAREN) {
+			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
+		}
+		TreeNode argList = new TreeNode(TreeNodeKind.ARG_LIST, currLine, null);
+		TreeNode exp = expression();
+		token = getNextToken();
+		if (token.getKind() == Kind.T_RPAREN) {
+			cacheToken(token);
+		} else {
+			assertToken(token, Kind.T_COMMA, ",");
+		}
+		TreeNode argList2 = argList();
+		argList.addChild(argList2);
+		argList.addChild(exp);
+		return argList;
+	}
 
 	private TreeNode id() throws BPLParserException {
 		Token token = getNextToken();
