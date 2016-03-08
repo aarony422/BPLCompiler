@@ -43,7 +43,13 @@ public enum TreeNodeKind {
 	E(40),
 	T(41),
 	F(42),
-	FACTOR(43);
+	FACTOR(43),
+	NEG_F(44),
+	ADDRESS_F(45),
+	DEREF_F(46),
+	READ(47),
+	FUN_CALL(48),
+	ARRAY_FACTOR(49);
 	
 	
 	private int id;
