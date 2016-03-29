@@ -335,6 +335,10 @@ public class BPLParser {
 	private TreeNode statementList() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
+		if (token.getKind() == Kind.T_EOF) {
+			assertToken(token, Kind.T_RBRACE, "}");
+		}
+		
 		if (token.getKind() == Kind.T_RBRACE) {
 			cacheToken(token);
 			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
