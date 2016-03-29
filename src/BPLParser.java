@@ -662,7 +662,7 @@ public class BPLParser {
 	
 	private TreeNode string() throws BPLParserException {
 		Token token = getNextToken();
-		assertToken(token, Kind.T_STR, "<string>");
+		assertToken(token, Kind.T_STRING, "<string>");
 		return new TreeNode(TreeNodeKind.STR, currLine, token.getValue());
 	}
 	
