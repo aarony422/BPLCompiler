@@ -3,7 +3,6 @@ int *y;
 int z[80];
 
 int main(int A, string *B, int C[]) {
-    int A;
-    string x;
+    x = A + B;
     return x;
 }

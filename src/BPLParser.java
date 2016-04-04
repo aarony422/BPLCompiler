@@ -523,8 +523,10 @@ public class BPLParser {
 		Token token = getNextToken();
 		if (token.getKind() == Kind.T_MINUS) {
 			F = new TreeNode(TreeNodeKind.NEG_F, currLine, null);
-			TreeNode fac = factor();
-			F.addChild(fac);
+			TreeNode F2 = F();
+			F.addChild(F2);
+			//TreeNode fac = factor();
+			//F.addChild(fac);
 		} else if (token.getKind() == Kind.T_AMPERSAND) {
 			F = new TreeNode(TreeNodeKind.ADDRESS_F, currLine, null);
 			TreeNode fac = factor();
@@ -547,18 +549,19 @@ public class BPLParser {
 		Token token = getNextToken();
 		
 		if (token.getKind() == Kind.T_READ) {
+			factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
 			token = getNextToken();
 			assertToken(token, Kind.T_LPAREN, "(");
 			token = getNextToken();
 			assertToken(token, Kind.T_RPAREN, ")");
-			factor = new TreeNode(TreeNodeKind.READ, currLine, null);
+			factor.addChild(new TreeNode(TreeNodeKind.READ, currLine, null));
 		} else if (token.getKind() == Kind.T_NUM) {
 			factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
 			cacheToken(token);
 			TreeNode num = num();
 			factor.addChild(num);
 		} else if (token.getKind() == Kind.T_STRING) {
-			factor = new TreeNode(TreeNodeKind.STR, currLine, null);
+			factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
 			cacheToken(token);
 			TreeNode string = string();
 			factor.addChild(string);
@@ -594,7 +597,7 @@ public class BPLParser {
 			assertToken(token, Kind.T_RPAREN, ")");
 			//cacheToken(token);
 			factor.addChild(exp);
-		} else { // FUN_CALL
+		} else { 
 			System.out.println("Something Went Wrong");
 			System.exit(1);
 		}
