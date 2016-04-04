@@ -48,10 +48,35 @@ public class BPLTypeChecker {
 	}
 	
 	private void findReferencesCompoundStmt(TreeNode compStmt, LinkedList<TreeNode> localDecs) {
-		if (compStmt.getChildren().size() == 2) {
-			//findReferencesLocalDecs();
+		for (TreeNode t : compStmt.getChildren()) {
+			if (t.getKind() == TreeNodeKind.LOCAL_DECS) {
+				findReferencesLocalDecs(t, localDecs);
+			} else if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
+				findReferencesStmtList(t, localDecs);
+			}
+
 		}
 		
+	}
+	
+	private void findReferencesLocalDecs(TreeNode local_decs, LinkedList<TreeNode> localDecs) {
+		while (!isEmpty(local_decs)) {
+			TreeNode varDec = getDec(local_decs);
+			addVarDecToLocalDecs(varDec, localDecs);
+			local_decs = getDecList(local_decs);
+		}
+	}
+	
+	private void findReferencesStmtList(TreeNode stmtList, LinkedList<TreeNode> localDecs) {
+		
+	}
+	
+	private void addVarDecToLocalDecs(TreeNode varDec, LinkedList<TreeNode> localDecs) {
+		localDecs.addFirst(varDec);
+		
+		if (debug) {
+			System.out.println("Added " + varDec.getKind() + " " + getDecType(varDec) + " " + getDecId(varDec) + " to Local Declarations");
+		}
 	}
 	
 	private void findReferencesParams(TreeNode funDec, LinkedList<TreeNode> localDecs) {
