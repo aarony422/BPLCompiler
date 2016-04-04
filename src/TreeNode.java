@@ -5,12 +5,26 @@ public class TreeNode {
 	private int line;
 	private String value;
 	private ArrayList<TreeNode> children;
+	private TreeNode declaration;
 	
 	public TreeNode(TreeNodeKind kind, int line, String value) {
 		this.kind = kind;
 		this.line = line;
 		this.value = value;
 		this.children = new ArrayList<TreeNode>();
+		this.declaration = null;
+	}
+	
+	public String getValue() {
+		return this.value;
+	}
+	
+	public void setDec(TreeNode t) {
+		this.declaration = t;
+	}
+	
+	public TreeNode getDec() {
+		return this.declaration;
 	}
 	
 	public ArrayList<TreeNode> getChildren() {

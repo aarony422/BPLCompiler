@@ -254,9 +254,8 @@ public class BPLParser {
 			cacheToken(token);
 			TreeNode statementList = statementList();
 			token = getNextToken();
-			compoundStmt.addChild(statementList);
+			compoundStmt.addChild(statementList);			
 		}
-		token = getNextToken();
 		assertToken(token, Kind.T_RBRACE, "}");
 		return compoundStmt;
 	}
@@ -340,7 +339,7 @@ public class BPLParser {
 		}
 		
 		if (token.getKind() == Kind.T_RBRACE) {
-			cacheToken(token);
+			//cacheToken(token);
 			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
 		}
 		TreeNode statementList = new TreeNode(TreeNodeKind.STATEMENT_LIST, currLine, null);
