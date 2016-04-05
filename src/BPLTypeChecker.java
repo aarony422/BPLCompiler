@@ -71,12 +71,13 @@ public class BPLTypeChecker {
 	private void findReferencesStmtList(TreeNode stmtList, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
 		while (!isEmpty(stmtList)) {
 			TreeNode stmt = getDec(stmtList);
-			findReferencesStmt(stmt.getChildren().get(0), localDecs);
+			findReferencesStmt(stmt, localDecs);
 			stmtList = getDecList(stmtList);
 		}
 	}
 	
-	private void findReferencesStmt(TreeNode stmt, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private void findReferencesStmt(TreeNode statement, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		TreeNode stmt = statement.getChildren().get(0);
 		if (stmt.getKind() == TreeNodeKind.EXPRESSION_STMT) {
 			findReferencesExpStmt(stmt, localDecs);
 		} else if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
@@ -171,9 +172,7 @@ public class BPLTypeChecker {
 	
 	private void findReferencesFactor(TreeNode factor, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
 		TreeNode fac = factor.getChildren().get(0);
-		System.out.println("FindReferenceFactor = " + factor);
 		if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
-			System.out.println("FOUND Array Factor: " + fac);
 			findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
 			findReferencesExpression(factor.getChildren().get(1), localDecs);
 		} else if (fac.getKind() == TreeNodeKind.ID) {
@@ -204,6 +203,9 @@ public class BPLTypeChecker {
 		TreeNode ID = var.getChildren().get(0);
 		String id = ID.getValue();
 		findReferencesID(var, localDecs, id);
+		if (var.getKind() == TreeNodeKind.ARRAY_VAR) {
+			findReferencesExpression(var.getChildren().get(1), localDecs);
+		}
 	}
 	
 	private void findReferencesID(TreeNode var, LinkedList<TreeNode> localDecs, String id) throws BPLTypeCheckerException {
@@ -217,7 +219,7 @@ public class BPLTypeChecker {
 		var.setDec(reference);
 		
 		if (debug) {
-			System.out.println(var.getKind() + " " + id + " linked to declaration " + reference);
+			System.out.println(var + " " + id + " linked to declaration " + reference);
 		}
 	}
 	
