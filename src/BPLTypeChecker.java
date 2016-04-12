@@ -44,6 +44,7 @@ public class BPLTypeChecker {
 		LinkedList<TreeNode> localDecs = new LinkedList<TreeNode>();
 		findReferencesParams(funDec, localDecs);
 		TreeNode compStmt = funDec.getChildren().get(3);
+		// TODO pass in function return type for use in findReferencesReturnStmt
 		findReferencesCompoundStmt(compStmt, localDecs);
 	}
 	
@@ -101,7 +102,11 @@ public class BPLTypeChecker {
 	}
 	
 	private void findReferencesIfStmt(TreeNode ifStmt, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
-		findReferencesExpression(ifStmt.getChildren().get(0), localDecs);
+		Type conditionType = findReferencesExpression(ifStmt.getChildren().get(0), localDecs);
+		if (debug) {
+			System.out.println("If Condition assigned type " + conditionType + " on line " + ifStmt.getLine());
+		}
+		assertType(conditionType, Type.INT, ifStmt.getLine());
 		findReferencesStmt(ifStmt.getChildren().get(1), localDecs);
 		if (ifStmt.getChildren().size() > 2) {
 			findReferencesStmt(ifStmt.getChildren().get(2), localDecs);
@@ -109,7 +114,11 @@ public class BPLTypeChecker {
 	}
 
 	private void findReferencesWhileStmt(TreeNode whileStmt, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
-		findReferencesExpression(whileStmt.getChildren().get(0), localDecs);
+		Type conditionType = findReferencesExpression(whileStmt.getChildren().get(0), localDecs);
+		if (debug) {
+			System.out.println("While Condition assigned type " + conditionType + "on line " + whileStmt.getLine());
+		}
+		assertType(conditionType, Type.INT, whileStmt.getLine());
 		findReferencesStmt(whileStmt.getChildren().get(1), localDecs);
 	}
 
@@ -127,62 +136,104 @@ public class BPLTypeChecker {
 		findReferencesExpression(writeStmt.getChildren().get(0), localDecs);
 	}
 	
-	private void findReferencesExpression(TreeNode exp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesExpression(TreeNode exp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type expressionType = Type.NONE;
 		if (exp.getChildren().get(0).getKind() == TreeNodeKind.ASSIGN_EXP) {
 			findReferencesAssignExp(exp.getChildren().get(0), localDecs);
 		} else {
-			findReferencesCompExp(exp.getChildren().get(0), localDecs);
+			expressionType = findReferencesCompExp(exp.getChildren().get(0), localDecs);
 		}
+		return expressionType;
 	}
 	
-	private void findReferencesCompExp(TreeNode compExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesCompExp(TreeNode compExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type compExpType = Type.NONE;
 		if (compExp.getChildren().size() == 1) {
-			findReferencesE(compExp.getChildren().get(0), localDecs);
+			compExpType = findReferencesE(compExp.getChildren().get(0), localDecs);
 		} else {
-			findReferencesE(compExp.getChildren().get(0), localDecs);
-			findReferencesE(compExp.getChildren().get(2), localDecs);
+			Type E1Type = findReferencesE(compExp.getChildren().get(0), localDecs);
+			assertType(E1Type, Type.INT, compExp.getLine());
+			Type E2Type = findReferencesE(compExp.getChildren().get(2), localDecs);
+			assertType(E2Type, Type.INT, compExp.getLine());
+			if (debug) {
+				System.out.println(compExp.getChildren().get(1).getChildren().get(0).getValue() + " assigned Type " + Type.INT + " on line " + compExp.getLine());
+			}
+			compExpType = Type.INT;
 		}
-		
+		return compExpType;
 	}
 	
-	private void findReferencesE(TreeNode E, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesE(TreeNode E, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type EType = Type.NONE;
 		if (E.getChildren().size() == 1) {
-			findReferencesT(E.getChildren().get(0), localDecs);
+			EType = findReferencesT(E.getChildren().get(0), localDecs);
 		} else {
-			findReferencesE(E.getChildren().get(0), localDecs);
-			findReferencesT(E.getChildren().get(2), localDecs);
+			Type E1 = findReferencesE(E.getChildren().get(0), localDecs);
+			assertType(E1, Type.INT, E.getLine());
+			Type T = findReferencesT(E.getChildren().get(2), localDecs);
+			assertType(T, Type.INT, E.getLine());
+			if (debug) {
+				System.out.println(E.getChildren().get(1).getChildren().get(0).getValue() + " assigned Type " + Type.INT + " on line " + E.getLine());
+			}
+			EType = Type.INT;
 		}
+		return EType;
 	}
 	
-	private void findReferencesT(TreeNode T, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesT(TreeNode T, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type TType = Type.NONE;
 		if (T.getChildren().size() == 1) {
-			findReferencesF(T.getChildren().get(0), localDecs);
+			TType = findReferencesF(T.getChildren().get(0), localDecs);
 		} else {
-			findReferencesT(T.getChildren().get(0), localDecs);
-			findReferencesF(T.getChildren().get(2), localDecs);
+			Type T1 = findReferencesT(T.getChildren().get(0), localDecs);
+			assertType(T1, Type.INT, T.getLine());
+			Type F = findReferencesF(T.getChildren().get(2), localDecs);
+			assertType(F, Type.INT, T.getLine());
+			if (debug) {
+				System.out.println(T.getChildren().get(1).getChildren().get(0).getValue() + " assigned Type " + Type.INT + " on line " + T.getLine());
+			}
+			TType = Type.INT;
 		}
+		return TType;
 	}
 	
-	private void findReferencesF(TreeNode F, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesF(TreeNode F, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type FType = Type.NONE;
 		if (F.getKind() == TreeNodeKind.NEG_F) {
-			findReferencesF(F.getChildren().get(0), localDecs);
+			Type F1 = findReferencesF(F.getChildren().get(0), localDecs);
+			assertType(F1, Type.INT, F.getLine());
+		} else {
+			FType = findReferencesFactor(F.getChildren().get(0), localDecs);
 		}
-		findReferencesFactor(F.getChildren().get(0), localDecs);
+		return FType;
 	}
 	
-	private void findReferencesFactor(TreeNode factor, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesFactor(TreeNode factor, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type factorType = Type.NONE;
 		TreeNode fac = factor.getChildren().get(0);
 		if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
 			findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
 			findReferencesExpression(factor.getChildren().get(1), localDecs);
+			// TODO check expression is type int 
+		} else if (factor.getKind() == TreeNodeKind.ADDRESS_F) {
+			// Handle & operator
+		} else if (factor.getKind() == TreeNodeKind.DEREF_F) {
+			// Handle * operator
 		} else if (fac.getKind() == TreeNodeKind.ID) {
-			findReferencesID(fac, localDecs, fac.getValue());
+			factorType = findReferencesID(fac, localDecs, fac.getValue());
 		} else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
 			findReferencesExpression(fac, localDecs);
 		} else if (fac.getKind() == TreeNodeKind.FUN_CALL) {
 			findReferencesID(fac.getChildren().get(0), localDecs, fac.getChildren().get(0).getValue());
 			findReferencesArgs(fac.getChildren().get(1), localDecs);
+		} else if (fac.getKind() == TreeNodeKind.NUM) {
+			factorType = Type.INT;
+		} else if (fac.getKind() == TreeNodeKind.STR) {
+			factorType = Type.INT;
+		} else if (fac.getKind() == TreeNodeKind.READ) {
+			factorType = Type.INT;
 		}
+		return factorType;
 	}
 	
 	private void findReferencesArgs(TreeNode args, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
@@ -196,19 +247,25 @@ public class BPLTypeChecker {
 	
 	private void findReferencesAssignExp(TreeNode assignExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
 		findReferencesVar(assignExp.getChildren().get(0), localDecs);
+		// check L-value
 		findReferencesExpression(assignExp.getChildren().get(1), localDecs);
+		// TODO check assignment agreement
 	}
 	
-	private void findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private Type findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+		Type varType = Type.NONE;
 		TreeNode ID = var.getChildren().get(0);
 		String id = ID.getValue();
-		findReferencesID(var, localDecs, id);
+		varType = findReferencesID(var, localDecs, id);
 		if (var.getKind() == TreeNodeKind.ARRAY_VAR) {
 			findReferencesExpression(var.getChildren().get(1), localDecs);
+			// TODO: check exp type is int
 		}
+		return varType;
 	}
 	
-	private void findReferencesID(TreeNode var, LinkedList<TreeNode> localDecs, String id) throws BPLTypeCheckerException {
+	private Type findReferencesID(TreeNode var, LinkedList<TreeNode> localDecs, String id) throws BPLTypeCheckerException {
+		Type varType = Type.NONE;
 		TreeNode reference = findLocalReference(id, localDecs);
 		if (reference == null) {
 			reference = findGlobalReference(id);
@@ -217,10 +274,36 @@ public class BPLTypeChecker {
 			throw new BPLTypeCheckerException("TypeChecker Error: Variable " + id + " referenced before assignment.");
 		}
 		var.setDec(reference);
-		
+		varType = findVarType(reference);
 		if (debug) {
 			System.out.println(var + " " + id + " linked to declaration " + reference);
+			System.out.println(var + " " + id + " assigned Type " + varType);
 		}
+		return varType;
+	}
+	
+	private Type findVarType(TreeNode reference) {
+		Type refType = Type.NONE;
+		if (reference.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT_ARRAY;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING_ARRAY;
+			}
+		} else if (reference.getKind() == TreeNodeKind.POINTER_VAR_DEC) {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT_PTR;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING_PTR;
+			}
+		} else {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING;
+			}
+		}
+		return refType;
 	}
 	
 	private TreeNode findLocalReference(String id, LinkedList<TreeNode> localDecs) {
@@ -343,5 +426,15 @@ public class BPLTypeChecker {
 	
 	private TreeNode getDecList(TreeNode t) {
 		return t.getChildren().get(0);
+	}
+	
+	private void assertType(Type type, Type expected, int line) throws BPLTypeCheckerException {
+		if (type != expected) {
+			throw new BPLTypeCheckerException("TypeChecker Error: Expected " + expected + " but got " + type + " on line " + line);
+		}
+		
+		if (debug) {
+			
+		}
 	}
 }
