@@ -19,6 +19,13 @@ public class TreeNode {
 		return this.value;
 	}
 	
+	public void setValue(String val) {
+		if (this.value != null) {
+			System.out.println(this + " value overwritten!");
+		}
+		this.value = val;
+	}
+	
 	public void setDec(TreeNode t) {
 		this.declaration = t;
 	}

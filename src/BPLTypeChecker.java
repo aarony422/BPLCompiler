@@ -221,7 +221,11 @@ public class BPLTypeChecker {
 			Type F1 = findReferencesF(F.getChildren().get(0), localDecs);
 			assertType(F1, Type.INT, F.getLine());
 		} else {
-			FType = findReferencesFactor(F.getChildren().get(0), localDecs);
+			if (F.getKind() == TreeNodeKind.ADDRESS_F || F.getKind() == TreeNodeKind.DEREF_F) {
+				FType = findReferencesFactor(F, localDecs);
+			} else {
+				FType = findReferencesFactor(F.getChildren().get(0), localDecs);
+			}
 		}
 		return FType;
 	}
@@ -230,15 +234,55 @@ public class BPLTypeChecker {
 		Type factorType = Type.NONE;
 		TreeNode fac = factor.getChildren().get(0);
 		if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
-			findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
-			findReferencesExpression(factor.getChildren().get(1), localDecs);
-			// TODO check expression is type int 
+			Type idType = findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
+			// Maybe check ID is of type int / string array??
+			Type[] expected = {Type.INT_ARRAY, Type.STRING_ARRAY};
+			assertType(idType, expected, factor.getLine());
+			Type expType = findReferencesExpression(factor.getChildren().get(1), localDecs);
+			assertType(expType, Type.INT, factor.getLine());
+			
+			if (idType == Type.INT_ARRAY) {
+				factorType = Type.INT;
+			} else if (idType == Type.STRING_ARRAY) {
+				factorType = Type.STRING;
+			}
+			
+			// TODO have findReferenceExpression pass the expression "upwards" for debug message
+			if (debug) {
+				System.out.println(factor.getChildren().get(0).getValue() + "[<expression>]" + " assigned Type " + factorType + " on line " + factor.getLine());
+			}
+			
 		} else if (factor.getKind() == TreeNodeKind.ADDRESS_F) {
-			// Handle & operator
+			factorType = findReferencesFactor(fac, localDecs);
+			Type[] expected = {Type.INT, Type.STRING};
+			assertType(factorType, expected, factor.getLine());
+			
+			if (factorType == Type.INT) {
+				factorType = Type.INT_ADDRESS;
+			} else if (factorType == Type.STRING) {
+				factorType = Type.STRING_ADDRESS;
+			}
+			factor.setValue(factor.getChildren().get(0).getValue());
+			if (debug) {
+				System.out.println("&" + factor.getValue() + " assigned Type " + factorType + " on line " + factor.getLine());
+			}
+			
 		} else if (factor.getKind() == TreeNodeKind.DEREF_F) {
-			// Handle * operator
+			factorType = findReferencesFactor(fac, localDecs);
+			Type[] expected = {Type.INT_PTR, Type.STRING_PTR};
+			assertType(factorType, expected, factor.getLine());
+			if (factorType == Type.INT_PTR) {
+				factorType = Type.INT;
+			} else if (factorType == Type.STRING_PTR) {
+				factorType = Type.STRING;
+			}
+			factor.setValue(factor.getChildren().get(0).getValue());
+			if (debug) {
+				System.out.println("*" + factor.getValue() + " assigned Type " + factorType + " on line " + factor.getLine());
+			}
 		} else if (fac.getKind() == TreeNodeKind.ID) {
 			factorType = findReferencesID(fac, localDecs, fac.getValue());
+			factor.setValue(fac.getValue());
 		} else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
 			findReferencesExpression(fac, localDecs);
 		} else if (fac.getKind() == TreeNodeKind.FUN_CALL) {
@@ -296,6 +340,9 @@ public class BPLTypeChecker {
 		if (debug) {
 			System.out.println(var + " " + id + " linked to declaration " + reference);
 			System.out.println(var + " " + id + " assigned Type " + varType);
+		}
+		if (var.getKind() != TreeNodeKind.ID) {
+			var.setValue(id);
 		}
 		return varType;
 	}
@@ -454,5 +501,16 @@ public class BPLTypeChecker {
 		if (debug) {
 			
 		}
+	}
+	
+	private void assertType(Type type, Type[] expected, int line) throws BPLTypeCheckerException {
+		String expectedTypes = "";
+		for (Type t : expected) {
+			if (type == t) {
+				return;
+			}
+			expectedTypes = expectedTypes + t + ",";
+		}
+		throw new BPLTypeCheckerException("TypeChecker Error: Expected " + expectedTypes + " but got " + type + " on line " + line);
 	}
 }
