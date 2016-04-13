@@ -235,8 +235,9 @@ public class BPLTypeChecker {
 		TreeNode fac = factor.getChildren().get(0);
 		if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
 			Type idType = findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
-			// Maybe check ID is of type int / string array??
+
 			Type[] expected = {Type.INT_ARRAY, Type.STRING_ARRAY};
+			// This check might be unnecessary  
 			assertType(idType, expected, factor.getLine());
 			Type expType = findReferencesExpression(factor.getChildren().get(1), localDecs);
 			assertType(expType, Type.INT, factor.getLine());
@@ -308,10 +309,19 @@ public class BPLTypeChecker {
 	}
 	
 	private void findReferencesAssignExp(TreeNode assignExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
-		findReferencesVar(assignExp.getChildren().get(0), localDecs);
-		// check L-value
-		findReferencesExpression(assignExp.getChildren().get(1), localDecs);
+		TreeNode var = assignExp.getChildren().get(0);
+		Type varType = findReferencesVar(assignExp.getChildren().get(0), localDecs);
+		Type expType = findReferencesExpression(assignExp.getChildren().get(1), localDecs);
+
 		// TODO check assignment agreement
+		if (varType == Type.INT_PTR) {
+			assertType(expType, Type.INT_ADDRESS, assignExp.getLine());
+		} else if (varType == Type.STRING_PTR) {
+			assertType(expType, Type.STRING_ADDRESS, assignExp.getLine());
+		} else {
+			assertType(expType, varType, assignExp.getLine());
+		}
+		
 	}
 	
 	private Type findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
@@ -320,8 +330,28 @@ public class BPLTypeChecker {
 		String id = ID.getValue();
 		varType = findReferencesID(var, localDecs, id);
 		if (var.getKind() == TreeNodeKind.ARRAY_VAR) {
-			findReferencesExpression(var.getChildren().get(1), localDecs);
-			// TODO: check exp type is int
+			Type expType = findReferencesExpression(var.getChildren().get(1), localDecs);
+			assertType(expType, Type.INT, var.getLine());
+			
+			if (varType == Type.INT_ARRAY) {
+				varType = Type.INT;
+			} else if (varType == Type.STRING_ARRAY) {
+				varType = Type.STRING;
+			}
+			
+			if (debug) {
+				System.out.println( id + "[<expression>]" + " assigned Type " + varType + " on line " + var.getLine());
+			}
+
+		} else if (var.getKind() == TreeNodeKind.POINTER_VAR) {
+			if (varType == Type.INT_PTR) {
+				varType = Type.INT;
+			} else if (varType == Type.STRING_PTR) {
+				varType = Type.STRING;
+			}
+			if (debug) {
+				System.out.println("*" + id + " assigned Type " + varType + " on line " + var.getLine());
+			}
 		}
 		return varType;
 	}
