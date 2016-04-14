@@ -45,7 +45,6 @@ public class BPLTypeChecker {
 		LinkedList<TreeNode> localDecs = new LinkedList<TreeNode>();
 		findReferencesParams(funDec, localDecs);
 		TreeNode compStmt = funDec.getChildren().get(3);
-		// TODO pass in function return type for use in findReferencesReturnStmt
 		findReferencesCompoundStmt(compStmt, localDecs, funRtnType);
 	}
 	
@@ -61,16 +60,13 @@ public class BPLTypeChecker {
 	}
 	
 	private void findReferencesCompoundStmt(TreeNode compStmt, LinkedList<TreeNode> localDecs, Type funRtnType) throws BPLTypeCheckerException {
-		
 		for (TreeNode t : compStmt.getChildren()) {
 			if (t.getKind() == TreeNodeKind.LOCAL_DECS) {
 				findReferencesLocalDecs(t, localDecs);
 			} else if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
 				findReferencesStmtList(t, localDecs, funRtnType);
 			}
-
 		}
-		
 	}
 	
 	private void findReferencesLocalDecs(TreeNode local_decs, LinkedList<TreeNode> localDecs) {
@@ -103,7 +99,7 @@ public class BPLTypeChecker {
 		} else if (stmt.getKind() == TreeNodeKind.RETURN_STMT) {
 			stmtType = findReferencesReturnStmt(stmt, localDecs);
 			if (debug) {
-				System.out.println("Return statement assigned type " + stmtType + " on line " + statement.getLine());
+				System.out.println("Return statement assigned type " + stmtType + " on line " + stmt.getLine());
 			}
 			assertType(stmtType, funRtnType, statement.getLine());
 		} else if (stmt.getKind() == TreeNodeKind.WRITE_STMT) {
@@ -235,20 +231,17 @@ public class BPLTypeChecker {
 		TreeNode fac = factor.getChildren().get(0);
 		if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
 			Type idType = findReferencesID(factor.getChildren().get(0), localDecs, factor.getChildren().get(0).getValue());
-
 			Type[] expected = {Type.INT_ARRAY, Type.STRING_ARRAY};
-			// This check might be unnecessary  
 			assertType(idType, expected, factor.getLine());
 			Type expType = findReferencesExpression(factor.getChildren().get(1), localDecs);
 			assertType(expType, Type.INT, factor.getLine());
-			
+			factorType = idType;
 			if (idType == Type.INT_ARRAY) {
 				factorType = Type.INT;
 			} else if (idType == Type.STRING_ARRAY) {
 				factorType = Type.STRING;
 			}
 			
-			// TODO have findReferenceExpression pass the expression "upwards" for debug message
 			if (debug) {
 				System.out.println(factor.getChildren().get(0).getValue() + "[<expression>]" + " assigned Type " + factorType + " on line " + factor.getLine());
 			}
@@ -281,39 +274,83 @@ public class BPLTypeChecker {
 			if (debug) {
 				System.out.println("*" + factor.getValue() + " assigned Type " + factorType + " on line " + factor.getLine());
 			}
+			
 		} else if (fac.getKind() == TreeNodeKind.ID) {
 			factorType = findReferencesID(fac, localDecs, fac.getValue());
 			factor.setValue(fac.getValue());
 		} else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
 			findReferencesExpression(fac, localDecs);
 		} else if (fac.getKind() == TreeNodeKind.FUN_CALL) {
-			findReferencesID(fac.getChildren().get(0), localDecs, fac.getChildren().get(0).getValue());
-			findReferencesArgs(fac.getChildren().get(1), localDecs);
+			Type funRtnType = findReferencesID(fac.getChildren().get(0), localDecs, fac.getChildren().get(0).getValue());
+			findReferencesArgs(fac.getChildren().get(1), localDecs, fac.getChildren().get(0).getDec());
+			factorType = funRtnType;
 		} else if (fac.getKind() == TreeNodeKind.NUM) {
 			factorType = Type.INT;
 		} else if (fac.getKind() == TreeNodeKind.STR) {
-			factorType = Type.INT;
+			factorType = Type.STRING;
 		} else if (fac.getKind() == TreeNodeKind.READ) {
 			factorType = Type.INT;
 		}
 		return factorType;
 	}
 	
-	private void findReferencesArgs(TreeNode args, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+	private void findReferencesArgs(TreeNode args, LinkedList<TreeNode> localDecs, TreeNode funDec) throws BPLTypeCheckerException {
 		TreeNode argList = args.getChildren().get(0);
-		while (!isEmpty(argList)) {
+		TreeNode params = funDec.getChildren().get(2);
+		TreeNode paramList = null;
+		Type paramType = Type.NONE;
+		if (!areParams(params)) {
+			paramList = new TreeNode(TreeNodeKind.EMPTY, -1, null);
+		} else {
+			paramList = params.getChildren().get(0);
+		}
+		
+		while (!isEmpty(argList) && !isEmpty(paramList)) {
+			TreeNode param = getParam(paramList);
+			paramType = getParamType(param);
 			TreeNode exp = argList.getChildren().get(1);
-			findReferencesExpression(exp, localDecs);
+			Type expType = findReferencesExpression(exp, localDecs);
+			assertType(expType, paramType, args.getLine());
+			
 			argList = argList.getChildren().get(0);
+			paramList = getParamList(paramList);
+		}
+		
+		if (!isEmpty(argList) || !isEmpty(paramList)) {
+			throw new BPLTypeCheckerException("TypeChecker Error: Incorrect number of arguments to " + funDec.getChildren().get(1).getValue());
 		}
 	}
 	
+	private Type getParamType(TreeNode param) {
+		TreeNodeKind type = param.getChildren().get(0).getChildren().get(0).getKind();
+		Type paramType = Type.NONE;
+		
+		if (param.getKind() == TreeNodeKind.POINTER_PARAM) {
+			if (type == TreeNodeKind.INT) {
+				paramType = Type.INT_PTR;
+			} else if (type == TreeNodeKind.STR) {
+				paramType = Type.STRING_PTR;
+			}
+		} else if (param.getKind() == TreeNodeKind.ARRAY_PARAM) {
+			if (type == TreeNodeKind.INT) {
+				paramType = Type.INT_ARRAY;
+			} else if (type == TreeNodeKind.STR) {
+				paramType = Type.STRING_ARRAY;
+			}
+		} else {
+			if (type == TreeNodeKind.INT) {
+				paramType = Type.INT;
+			} else if (type == TreeNodeKind.STR) {
+				paramType = Type.STRING;
+			}
+		}
+		return paramType;
+	}
+	
 	private void findReferencesAssignExp(TreeNode assignExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
-		TreeNode var = assignExp.getChildren().get(0);
 		Type varType = findReferencesVar(assignExp.getChildren().get(0), localDecs);
 		Type expType = findReferencesExpression(assignExp.getChildren().get(1), localDecs);
 
-		// TODO check assignment agreement
 		if (varType == Type.INT_PTR) {
 			assertType(expType, Type.INT_ADDRESS, assignExp.getLine());
 		} else if (varType == Type.STRING_PTR) {
@@ -321,7 +358,6 @@ public class BPLTypeChecker {
 		} else {
 			assertType(expType, varType, assignExp.getLine());
 		}
-		
 	}
 	
 	private Type findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
@@ -368,8 +404,12 @@ public class BPLTypeChecker {
 		var.setDec(reference);
 		varType = findVarType(reference);
 		if (debug) {
-			System.out.println(var + " " + id + " linked to declaration " + reference);
-			System.out.println(var + " " + id + " assigned Type " + varType);
+			System.out.println(var.getKind() + " " + id + " on line " + var.getLine() + " linked to declaration " + reference.getKind() + " on line " + reference.getLine());
+			if (reference.getKind() == TreeNodeKind.FUN_DEC) {
+				System.out.println("Function Call " + id + " assigned return Type " + varType + " on line " + var.getLine());
+			} else {
+				System.out.println(var.getKind() + " " + id + " assigned Type " + varType + " on line " + var.getLine());
+			}
 		}
 		if (var.getKind() != TreeNodeKind.ID) {
 			var.setValue(id);
@@ -386,6 +426,26 @@ public class BPLTypeChecker {
 				refType = Type.STRING_ARRAY;
 			}
 		} else if (reference.getKind() == TreeNodeKind.POINTER_VAR_DEC) {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT_PTR;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING_PTR;
+			}
+		} else if (reference.getKind() == TreeNodeKind.FUN_DEC) {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.VOID) {
+				refType = Type.VOID;
+			}
+		} else if (reference.getKind() == TreeNodeKind.ARRAY_PARAM) {
+			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
+				refType = Type.INT_ARRAY;
+			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
+				refType = Type.STRING_ARRAY;
+			}
+		} else if (reference.getKind() == TreeNodeKind.POINTER_PARAM) {
 			if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.INT) {
 				refType = Type.INT_PTR;
 			} else if (reference.getChildren().get(0).getChildren().get(0).getKind() == TreeNodeKind.STR) {
@@ -421,7 +481,7 @@ public class BPLTypeChecker {
 		localDecs.addFirst(varDec);
 		
 		if (debug) {
-			System.out.println("Added " + varDec.getKind() + " " + getDecType(varDec) + " " + getDecId(varDec) + " to Local Declarations");
+			System.out.println("Added " + varDec.getKind() + " " + getDecType(varDec) + " " + getDecId(varDec) + " to Local Declarations on line " + varDec.getLine());
 		}
 	}
 	
@@ -449,7 +509,7 @@ public class BPLTypeChecker {
 		localDecs.addFirst(param);
 		
 		if (debug) {
-			System.out.println("Added " + param.getKind() + " " + getParamType(param) + " " + getParamId(param) + " to Local Declarations");
+			System.out.println("Added " + param.getKind() + " " + getParamTypeString(param) + " " + getParamId(param) + " to Local Declarations on line " + param.getLine());
 		}
 	}
 	
@@ -457,7 +517,7 @@ public class BPLTypeChecker {
 		return param.getChildren().get(1).getValue();
 	}
 	
-	private String getParamType(TreeNode param) {
+	private String getParamTypeString(TreeNode param) {
 		return param.getChildren().get(0).getChildren().get(0).getValue();
 	}
 	
@@ -481,7 +541,7 @@ public class BPLTypeChecker {
 		globalDecs.put(getDecId(funDec), funDec);
 		
 		if (debug) {
-			System.out.println("Added " + funDec.getKind() + " " + getDecType(funDec) + " " + getDecId(funDec) + " to Global Declarations");
+			System.out.println("Added " + funDec.getKind() + " " + getDecType(funDec) + " " + getDecId(funDec) + " to Global Declarations on line " + funDec.getLine());
 		}
 	}
 	
@@ -493,7 +553,7 @@ public class BPLTypeChecker {
 		globalDecs.put(getDecId(varDec), varDec);
 		
 		if (debug) {
-			System.out.println("Added " + varDec.getKind() + " " + getDecType(varDec) + " " + getDecId(varDec) + " to Global Declarations");
+			System.out.println("Added " + varDec.getKind() + " " + getDecType(varDec) + " " + getDecId(varDec) + " to Global Declarations on line " + varDec.getLine());
 		}
 	}
 	
@@ -526,10 +586,6 @@ public class BPLTypeChecker {
 	private void assertType(Type type, Type expected, int line) throws BPLTypeCheckerException {
 		if (type != expected) {
 			throw new BPLTypeCheckerException("TypeChecker Error: Expected " + expected + " but got " + type + " on line " + line);
-		}
-		
-		if (debug) {
-			
 		}
 	}
 	

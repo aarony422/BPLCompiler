@@ -10,8 +10,8 @@ public class TypeCheckerTest {
 		try {
 			typeChecker.runTypeChecker();
 		} catch (BPLTypeCheckerException e) {
-			e.printStackTrace();
-			//System.out.println(e);
+			//e.printStackTrace();
+			System.out.println(e);
 		}
 
 	}
