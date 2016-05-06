@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ $# -lt 1 ] # if there are fewer than 2 arguments
+then
+	echo "Please provide 1 .bpl file as commandline argument."
+else
+	
+	execname=${1%.bpl}
+	filename="./"${execname##*/}".s"
+	javac -d bin src/*.java
+	cd bin
+	java BPLCodeGenerator "../"$1 #
+fi

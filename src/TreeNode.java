@@ -6,6 +6,7 @@ public class TreeNode {
 	private String value;
 	private ArrayList<TreeNode> children;
 	private TreeNode declaration;
+	private Type type;
 	
 	public TreeNode(TreeNodeKind kind, int line, String value) {
 		this.kind = kind;
@@ -13,6 +14,11 @@ public class TreeNode {
 		this.value = value;
 		this.children = new ArrayList<TreeNode>();
 		this.declaration = null;
+		this.type = null;
+	}
+	
+	public void setType(Type type) {
+		this.type = type;
 	}
 	
 	public String getValue() {
@@ -65,7 +71,7 @@ public class TreeNode {
 	
 	@Override
 	public String toString() {
-		String s = this.kind + ", string: " + this.value + ", line: " + this.line + " ";
+		String s = this.kind + ", string: " + this.value + ", line: " + this.line + " type: " + this.type + " ";
 		return s;
 	}
 }

@@ -145,11 +145,11 @@ public class BPLParser {
 		Token token = getNextToken();
 		TreeNode type = null;
 		if (token.getKind() == Kind.T_INT) {
-			type = new TreeNode(TreeNodeKind.INT, currLine, token.getValue());
+			type = new TreeNode(TreeNodeKind.INT, currLine, null);
 		} else if (token.getKind() == Kind.T_VOID) {
-			type = new TreeNode(TreeNodeKind.VOID, currLine, token.getValue());
+			type = new TreeNode(TreeNodeKind.VOID, currLine, null);
 		} else if (token.getKind() == Kind.T_STR) {
-			type = new TreeNode(TreeNodeKind.STR, currLine, token.getValue());
+			type = new TreeNode(TreeNodeKind.STR, currLine, null);
 		} else {
 			assertToken(token, Kind.T_INT, "int, void or string");
 		}

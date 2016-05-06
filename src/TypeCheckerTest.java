@@ -13,7 +13,28 @@ public class TypeCheckerTest {
 			//e.printStackTrace();
 			System.out.println(e);
 		}
-
+		
+		/*
+		if (typeChecker.getRoot() != null) {
+			printTree(typeChecker.getRoot(), 0);
+		}
+		*/
 	}
 
+	public static void printTree(TreeNode root, int spaces) {
+		for (int i = 0; i < spaces; i++) {
+			System.out.print("  ");
+		}
+		System.out.print(root);
+		System.out.println("{");
+		
+		for (TreeNode child : root.getChildren()) {
+			printTree(child, spaces+1);
+		}
+		
+		for (int i = 0; i < spaces; i++) {
+			System.out.print("  ");
+		}
+		System.out.println("}");
+	}
 }

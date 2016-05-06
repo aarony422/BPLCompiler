@@ -26,6 +26,10 @@ public class BPLTypeChecker {
 		}
 	}
 	
+	public TreeNode getRoot() {
+		return root;
+	}
+	
 	private void findReferences(TreeNode declist) throws BPLTypeCheckerException {
 		while (!isEmpty(declist)) {
 			TreeNode dec = getDec(declist);
@@ -157,6 +161,8 @@ public class BPLTypeChecker {
 		} else {
 			expressionType = findReferencesCompExp(exp.getChildren().get(0), localDecs);
 		}
+		exp.setType(expressionType);
+		
 		return expressionType;
 	}
 	
@@ -353,11 +359,13 @@ public class BPLTypeChecker {
 
 		if (varType == Type.INT_PTR) {
 			assertType(expType, Type.INT_ADDRESS, assignExp.getLine());
+			
 		} else if (varType == Type.STRING_PTR) {
 			assertType(expType, Type.STRING_ADDRESS, assignExp.getLine());
 		} else {
 			assertType(expType, varType, assignExp.getLine());
 		}
+		
 	}
 	
 	private Type findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
@@ -389,6 +397,7 @@ public class BPLTypeChecker {
 				System.out.println("*" + id + " assigned Type " + varType + " on line " + var.getLine());
 			}
 		}
+		var.setType(varType);
 		return varType;
 	}
 	
