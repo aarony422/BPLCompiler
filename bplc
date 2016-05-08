@@ -13,4 +13,5 @@ else
 	java BPLCodeGenerator "../"$1 > "../"$filename
 	chmod 755 "../"$filename
 	gcc -o "../"$filename2 "../"$filename
+	rm "../"$filename
 fi
