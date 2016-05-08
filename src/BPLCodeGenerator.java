@@ -85,21 +85,56 @@ public class BPLCodeGenerator {
   }
 
   private void genCodeCompStmt(TreeNode compStmt) {
-    if (compStmt.getChildren().size() == 0) {
-      return;
+    for (TreeNode t : compStmt.getChildren()) {
+      if (t.getKind() == TreeNodeKind.LOCAL_DECS) {
+        // genCodeLocalDecs(t);
+      } else if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
+        genCodeStatementList(t);
+      }
     }
+  }
 
-    // local dec
-    TreeNode statementList = null;
-    if (compStmt.getChildren().size() > 1) {
-      
-      // allocate local variables
+  private void genCodeStatementList(TreeNode stmtList) {
+    while (stmtList.getKind() != TreeNodeKind.EMPTY) {
+      TreeNode stmt = stmtList.getChildren().get(1);
+      genCodeStatment(stmt);
+      stmtList = stmtList.getChildren().get(0);
     }
+  }
 
-    // Statement List
-    //genCodeStatementList()
+  private void genCodeStatment(TreeNode statement) {
+    TreeNode stmt = statement.getChildren().get(0);
+		if (stmt.getKind() == TreeNodeKind.EXPRESSION_STMT) {
 
+		} else if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
 
+		} else if (stmt.getKind() == TreeNodeKind.IF_STMT) {
+
+		} else if (stmt.getKind() == TreeNodeKind.WHILE_STMT) {
+
+		} else if (stmt.getKind() == TreeNodeKind.RETURN_STMT) {
+
+		} else if (stmt.getKind() == TreeNodeKind.WRITE_STMT) {
+			genCodeWrite(stmt);
+		}
+  }
+
+  private void genCodeWrite(TreeNode writeStmt) {
+    if (writeStmt.getChildren().size() == 0) {
+      genCodeWriteln();
+    } else {
+      // genCodeWriteExp(writeStmt.getChildren().get(0));
+    }
+  }
+
+  private void genCodeWriteln() {
+    genRegReg("movl", "$0", "%eax", "Set eax to 0");
+    genRegReg("movq", "$.WritelnString", "%rdi", "");
+    call("printf");
+  }
+
+  private void call(String fun) {
+    System.out.printf("\t %s %10s%n", "call " + fun, "");
   }
 
   private void genRegReg(String opcode, String r1, String r2, String comment) {
