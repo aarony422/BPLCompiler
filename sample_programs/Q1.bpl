@@ -1,6 +1,6 @@
 void main(void) {
-  writeln();
-  write(16);
+  write(3+4/2);
   writeln();
   write("hello Aaron!");
+  writeln();
 }

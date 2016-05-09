@@ -158,15 +158,45 @@ public class BPLCodeGenerator {
     if (E.getChildren().size() == 1) {
       genCodeT(E.getChildren().get(0));
     } else {
-      // E ADDOP t
+      genCodeT(E.getChildren().get(2));
+      genReg("push", "%rax", "saving left operand on stack");
+      genCodeE(E.getChildren().get(0));
+      genCodeAddop(E.getChildren().get(1));
     }
+  }
+
+  private void genCodeAddop(TreeNode op) {
+    if (op.getChildren().get(0).getValue().equals("+")) {
+      genRegReg("addl", "0(%rsp)", "%eax", "performing addition");
+    } else {
+      genRegReg("subl", "0(%rsp)", "%eax", "performing subtraction");
+    }
+    genRegReg("addq", "$8", "%rsp", "popping value on the stack");
   }
 
   private void genCodeT(TreeNode T) {
     if (T.getChildren().size() == 1) {
       genCodeF(T.getChildren().get(0));
     } else {
-      // T MULOP F
+      String op = T.getChildren().get(1).getChildren().get(0).getValue();
+      if (op.equals("/") || op.equals("%")) {
+        genCodeF(T.getChildren().get(2));
+        genRegReg("movl", "%eax", "%ebp", "put divisor into ebp");
+        genCodeT(T.getChildren().get(0));
+        genRegReg("movl", "%eax", "%eax", "put dividend into eax");
+        gen("cltq", "sign-extend to all of rax");
+        gen("cqto", "sign-extend to rdx");
+        genReg("idivl", "%ebp", "perform division");
+        if (op.equals("%")) {
+          genRegReg("movl", "%edx", "%eax", "put remainder into eax");
+        }
+      } else {
+        genCodeT(T.getChildren().get(0));
+        genReg("push", "%rax", "saving left operand on stack");
+        genCodeF(T.getChildren().get(2));
+        genRegReg("imul", "0(%rsp)", "%eax", "performing multiplication");
+        genRegReg("addq", "$8", "%rsp", "popping value on the stack");
+      }
     }
   }
 
@@ -236,6 +266,14 @@ public class BPLCodeGenerator {
 
   private void genRegReg(String opcode, String r1, String r2, String comment) {
     System.out.printf("\t %4s %4s, %4s %10s #%s%n", opcode, r1, r2, "", comment);
+  }
+
+  private void genReg(String opcode, String r, String comment) {
+    System.out.printf("\t %4s %4s %10s #%s%n", opcode, r, "", comment);
+  }
+
+  private void gen(String opcode, String comment) {
+    System.out.printf("\t %4s %10s #%s%n", opcode, "", comment);
   }
 
   private void genCodeStringLiterals(TreeNode root) {
