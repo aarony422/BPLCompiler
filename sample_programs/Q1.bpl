@@ -1,8 +1,6 @@
-int x;
-int y[10];
-
 void main(void) {
-  int x;
-  write(x);
   writeln();
+  write(16);
+  writeln();
+  write("hello Aaron!");
 }
