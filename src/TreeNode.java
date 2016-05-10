@@ -7,6 +7,8 @@ public class TreeNode {
   private ArrayList<TreeNode> children;
   private TreeNode declaration;
   private Type type;
+  private int depth;
+  private int position;
 
   public TreeNode(TreeNodeKind kind, int line, String value) {
     this.kind = kind;
@@ -15,6 +17,24 @@ public class TreeNode {
     this.children = new ArrayList<TreeNode>();
     this.declaration = null;
     this.type = null;
+    this.depth = -1;
+    this.position = -1;
+  }
+
+  public void setDepth(int d) {
+    this.depth = d;
+  }
+
+  public int getDepth() {
+    return this.depth;
+  }
+
+  public void setPosition(int p) {
+    this.position = p;
+  }
+
+  public int getPosition() {
+    return this.position;
   }
 
   public void setType(Type type) {

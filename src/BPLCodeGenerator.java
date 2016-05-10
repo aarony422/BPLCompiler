@@ -21,7 +21,22 @@ public class BPLCodeGenerator {
   }
 
   public void generate() throws BPLCodeGeneratorException {
+    findDepths();
     header();
+  }
+
+  private void findDepths() {
+    TreeNode declist = root.getChildren().get(0);
+    while (declist.getKind() != TreeNodeKind.EMPTY) {
+      TreeNode dec = declist.getChildren().get(1);
+
+    }
+
+    // findDepthsDeclarations(root.getChildren().get(0), 0, 0);
+  }
+
+  private void findDepthsDeclarations (TreeNode declist, int depth, int position) {
+    while ()
   }
 
   private void header() throws BPLCodeGeneratorException {
@@ -150,8 +165,37 @@ public class BPLCodeGenerator {
     if (compExp.getChildren().size() == 1) {
       genCodeE(compExp.getChildren().get(0));
     } else {
-      // E RELOP E
+      genCodeE(compExp.getChildren().get(0));
+      genReg("push", "%rax", "saving left operand on stack");
+      genCodeE(compExp.getChildren().get(2));
+      genRegReg("cmpl", "%eax", "0(%rsp)", "perform comparison");
+      genCodeRelop(compExp.getChildren().get(1));
     }
+  }
+
+  private void genCodeRelop(TreeNode relop) {
+    String op = relop.getChildren().get(0).getValue();
+    String lab1 = ".L" + nextLabelNum();
+    String lab2 = ".L" + nextLabelNum();
+    if (op.equals("<=")) {
+      genReg("jg", lab2, "");
+    } else if (op.equals("<")) {
+      genReg("jge", lab2, "");
+    } else if (op.equals("==")) {
+      genReg("jne", lab2, "");
+    } else if (op.equals("!=")) {
+      genReg("je", lab2, "");
+    } else if (op.equals(">")) {
+      genReg("jle", lab2, "");
+    } else if (op.equals(">=")) {
+      genReg("jl", lab2, "");
+    }
+    genRegReg("movl", "$1", "%eax", "comparison evals to true");
+    genReg("jmp", lab1, "");
+    System.out.printf("%s:%n", lab2);
+    genRegReg("movl", "$0", "%eax", "comparison evals to false");
+    System.out.printf("%s:%n", lab1);
+    genRegReg("addq", "$8", "%rsp", "popping value on the stack");
   }
 
   private void genCodeE(TreeNode E) {
