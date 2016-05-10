@@ -21,22 +21,23 @@ public class BPLCodeGenerator {
   }
 
   public void generate() throws BPLCodeGeneratorException {
-    findDepths();
+    //findDepths();
     header();
   }
 
   private void findDepths() {
     TreeNode declist = root.getChildren().get(0);
     while (declist.getKind() != TreeNodeKind.EMPTY) {
-      TreeNode dec = declist.getChildren().get(1);
-
+      TreeNode dec = declist.getChildren().get(1).getChildren().get(0);
+      if (dec.getKind() == TreeNodeKind.VAR_DEC || dec.getKind() == TreeNodeKind.POINTER_VAR_DEC || dec.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
+        dec.setDepth(0);
+      } else {
+        dec.setDepth(0);
+        //findDeptsParams()
+      }
     }
 
     // findDepthsDeclarations(root.getChildren().get(0), 0, 0);
-  }
-
-  private void findDepthsDeclarations (TreeNode declist, int depth, int position) {
-    while ()
   }
 
   private void header() throws BPLCodeGeneratorException {
