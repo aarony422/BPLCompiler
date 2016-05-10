@@ -1,6 +1,22 @@
 int x;
 
-void main(void) {
-  write(5 <= 5);
+
+void f(int x, int y) {
+  write(x);
+  write(y);
+}
+
+void main() {
+  f(0,5);
+}
+
+
+/*
+int x;
+
+void main() {
+  write(5 > 3);
+  write("hello World!");
   writeln();
 }
+*/

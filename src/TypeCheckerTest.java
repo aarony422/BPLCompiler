@@ -1,41 +1,41 @@
 
 public class TypeCheckerTest {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		//String inputFileName = "sample_programs/selectionSort.bpl";
-		//String inputFileName = "sample_programs/P10.bpl";
-		String inputFileName = args[0];
-		BPLTypeChecker typeChecker = new BPLTypeChecker(inputFileName, true);
+  public static void main(String[] args) {
+    // TODO Auto-generated method stub
+    //String inputFileName = "sample_programs/selectionSort.bpl";
+    //String inputFileName = "sample_programs/P10.bpl";
+    String inputFileName = args[0];
+    BPLTypeChecker typeChecker = new BPLTypeChecker(inputFileName, true);
 
-		try {
-			typeChecker.runTypeChecker();
-		} catch (BPLTypeCheckerException e) {
-			//e.printStackTrace();
-			System.out.println(e);
-		}
+    try {
+      typeChecker.runTypeChecker();
+    } catch (BPLTypeCheckerException e) {
+      //e.printStackTrace();
+      System.out.println(e);
+    }
 
-		/*
-		if (typeChecker.getRoot() != null) {
-			printTree(typeChecker.getRoot(), 0);
-		}
-		*/
-	}
 
-	public static void printTree(TreeNode root, int spaces) {
-		for (int i = 0; i < spaces; i++) {
-			System.out.print("  ");
-		}
-		System.out.print(root);
-		System.out.println("{");
+    if (typeChecker.getRoot() != null) {
+      printTree(typeChecker.getRoot(), 0);
+    }
 
-		for (TreeNode child : root.getChildren()) {
-			printTree(child, spaces+1);
-		}
+  }
 
-		for (int i = 0; i < spaces; i++) {
-			System.out.print("  ");
-		}
-		System.out.println("}");
-	}
+  public static void printTree(TreeNode root, int spaces) {
+    for (int i = 0; i < spaces; i++) {
+      System.out.print("  ");
+    }
+    System.out.print(root);
+    System.out.println("{");
+
+    for (TreeNode child : root.getChildren()) {
+      printTree(child, spaces+1);
+    }
+
+    for (int i = 0; i < spaces; i++) {
+      System.out.print("  ");
+    }
+    System.out.println("}");
+  }
 }

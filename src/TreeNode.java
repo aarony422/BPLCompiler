@@ -95,7 +95,7 @@ public class TreeNode {
 
   @Override
   public String toString() {
-    String s = this.kind + ", string: " + this.value + ", line: " + this.line + " type: " + this.type + " ";
+    String s = this.kind + ", string: " + this.value + ", line: " + this.line + " type: " + this.type + " depth: "+ this.depth + " pos: " + this.position + " ";
     return s;
   }
 }

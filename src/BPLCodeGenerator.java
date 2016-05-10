@@ -20,8 +20,12 @@ public class BPLCodeGenerator {
     this.strMap = new HashMap<String, String>();
   }
 
+  public TreeNode getRoot() {
+    return this.root;
+  }
+
   public void generate() throws BPLCodeGeneratorException {
-    //findDepths();
+    findDepths();
     header();
   }
 
@@ -33,11 +37,62 @@ public class BPLCodeGenerator {
         dec.setDepth(0);
       } else {
         dec.setDepth(0);
-        //findDeptsParams()
+        TreeNode paramList = dec.getChildren().get(2).getChildren().get(0);
+        if (paramList.getKind() != TreeNodeKind.EMPTY && paramList.getKind() != TreeNodeKind.VOID) {
+          findDepthsParams(paramList, 1, 0);
+        }
+        int pos = findDepthsCompoundStmt(dec.getChildren().get(3), 2, 0);
+        dec.setPosition(pos-1);
+      }
+      declist = declist.getChildren().get(0);
+    }
+  }
+
+  private int findDepthsCompoundStmt(TreeNode compoundStmt, int depth, int position) {
+    int pos = position;
+    for (TreeNode t : compoundStmt.getChildren()) {
+      if (t.getKind() == TreeNodeKind.LOCAL_DECS) {
+        pos = findDepthsLocalDec(t, depth, pos);
+      } else if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
+        findDepthsStatementList(t, depth, pos);
       }
     }
+    return pos;
+  }
 
-    // findDepthsDeclarations(root.getChildren().get(0), 0, 0);
+  private void findDepthsStatementList(TreeNode statementList, int depth, int position) {
+    while (statementList.getKind() != TreeNodeKind.EMPTY) {
+      TreeNode stmt = statementList.getChildren().get(1).getChildren().get(0);
+      if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
+        findDepthsCompoundStmt(stmt, depth+1, position);
+      }
+      statementList = statementList.getChildren().get(0);
+    }
+  }
+
+  private int findDepthsLocalDec(TreeNode localDecs, int depth, int position) {
+    while (localDecs.getKind() != TreeNodeKind.EMPTY) {
+      TreeNode varDec = localDecs.getChildren().get(1);
+      varDec.setDepth(depth);
+      if (varDec.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
+        int arraypos = Integer.parseInt(varDec.getChildren().get(2).getValue())-1;
+        varDec.setPosition(position + arraypos);
+        position += arraypos + 1;
+      } else {
+        varDec.setPosition(position++);
+      }
+      localDecs = localDecs.getChildren().get(0);
+    }
+    return position;
+  }
+
+  private void findDepthsParams(TreeNode paramList, int depth, int position) {
+    while (paramList.getKind() != TreeNodeKind.EMPTY) {
+      TreeNode param = paramList.getChildren().get(1);
+      param.setDepth(depth);
+      param.setPosition(position++);
+      paramList = paramList.getChildren().get(0);
+    }
   }
 
   private void header() throws BPLCodeGeneratorException {
@@ -98,6 +153,11 @@ public class BPLCodeGenerator {
     // deallocate temporary variables
 
     // return
+    gen("ret", "return from the function");
+  }
+
+  private void ret() {
+
   }
 
   private void genCodeCompStmt(TreeNode compStmt) {
@@ -121,9 +181,11 @@ public class BPLCodeGenerator {
   private void genCodeStatment(TreeNode statement) {
     TreeNode stmt = statement.getChildren().get(0);
     if (stmt.getKind() == TreeNodeKind.EXPRESSION_STMT) {
-
+      if (stmt.getChildren().size() > 0) {
+        genCodeExpression(stmt.getChildren().get(0));
+      }
     } else if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
-
+      genCodeCompStmt(stmt);
     } else if (stmt.getKind() == TreeNodeKind.IF_STMT) {
 
     } else if (stmt.getKind() == TreeNodeKind.WHILE_STMT) {
@@ -144,11 +206,7 @@ public class BPLCodeGenerator {
   }
 
   private void genCodeWriteExp(TreeNode exp) {
-    if (exp.getChildren().get(0).getKind() == TreeNodeKind.ASSIGN_EXP) {
-      // genCodeAssignExp() do something else
-    } else {
-      genCodeCompExp(exp.getChildren().get(0));
-    }
+    genCodeExpression(exp);
     if (exp.getType() == Type.INT) {
       genRegReg("movl", "%eax", "%esi", "move value to print");
       genRegReg("movq", "$.WriteIntString", "%rdi", "set printf string");
@@ -159,6 +217,14 @@ public class BPLCodeGenerator {
       genRegReg("movq", "$.WriteStringString", "%rdi", "set printf string");
       genRegReg("movl", "$0", "%eax", "clear return value");
       call("printf");
+    }
+  }
+
+  private void genCodeExpression(TreeNode exp) {
+    if (exp.getChildren().get(0).getKind() == TreeNodeKind.ASSIGN_EXP) {
+      // genCodeAssignExp() do something else
+    } else {
+      genCodeCompExp(exp.getChildren().get(0));
     }
   }
 
@@ -270,20 +336,54 @@ public class BPLCodeGenerator {
       // genCodeFactor(fac);
 
     } else if (fac.getKind() == TreeNodeKind.ID) {
-      // genCodeID(fac);
+      genCodeID(fac);
 
     } else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
-      // genCodeExpression(fac);
+      genCodeExpression(fac);
 
     } else if (fac.getKind() == TreeNodeKind.FUN_CALL) {
-      // ID(fac.getChildren().get(0));
-      // Args(fac.getChildren().get(1));
+      int numArgs = genCodeArgs(fac.getChildren().get(1).getChildren().get(0));
+      genReg("push", "%rbx", "pushing the frame pointer");
+      call(fac.getChildren().get(0).getValue());
+      genReg("pop", "%rbx", "retrieving the frame pointer");
+      genRegReg("add", "$"+(numArgs*8), "%rsp", "removing args from the stack");
+
     } else if (fac.getKind() == TreeNodeKind.NUM) {
       genCodeNum(fac);
     } else if (fac.getKind() == TreeNodeKind.STR) {
       genCodeStr(fac);
     } else if (fac.getKind() == TreeNodeKind.READ) {
 
+    }
+  }
+
+  private int genCodeArgs(TreeNode argList) {
+    int numArgs = 0;
+    ArrayList<TreeNode> args = new ArrayList<TreeNode>();
+    while (argList.getKind() != TreeNodeKind.EMPTY) {
+      numArgs++;
+      TreeNode exp = argList.getChildren().get(1);
+      args.add(exp);
+      argList = argList.getChildren().get(0);
+    }
+
+    for (int i = args.size()-1; i >= 0; i--) {
+      TreeNode exp = args.get(i);
+      genCodeExpression(exp);
+      genReg("push", "%rax", "pushing argument");
+    }
+
+    return numArgs;
+  }
+
+  private void genCodeID(TreeNode id) {
+    TreeNode dec = id.getDec();
+    String label = id.getValue();
+    if (dec.getDepth() == 0) {
+      genRegReg("movq", label, "%rax", "putting global variable value into ac");
+    } else if (dec.getDepth() == 1) {
+      int offset = 16 + 8*(dec.getPosition());
+      genRegReg("movq", offset+"(%rbx)", "%rax", "putting param variable value into ac");
     }
   }
 
@@ -345,5 +445,24 @@ public class BPLCodeGenerator {
       e.printStackTrace();
     }
 
+    //printTree(codeGenerator.getRoot(), 0);
+
+  }
+
+  public static void printTree(TreeNode root, int spaces) {
+    for (int i = 0; i < spaces; i++) {
+      System.out.print("  ");
+    }
+    System.out.print(root);
+    System.out.println("{");
+
+    for (TreeNode child : root.getChildren()) {
+      printTree(child, spaces+1);
+    }
+
+    for (int i = 0; i < spaces; i++) {
+      System.out.print("  ");
+    }
+    System.out.println("}");
   }
 }
