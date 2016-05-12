@@ -1,13 +1,24 @@
-int x;
+string x;
 
+void f(string z) {
 
-void f(int x, int y) {
-  write(x);
-  write(y);
+  int y;
+  /*
+  int z[10];
+  int *a;
+  */
+
+  /*
+  z[0] = 7;
+  *a = 4;
+  */
+  write(z);
 }
 
+
 void main() {
-  f(0,5);
+  x = "hello";
+  f(x);
 }
 
 

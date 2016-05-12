@@ -26,6 +26,7 @@ public class BPLCodeGenerator {
 
   public void generate() throws BPLCodeGeneratorException {
     findDepths();
+    //printTree(root, 0);
     header();
   }
 
@@ -145,19 +146,22 @@ public class BPLCodeGenerator {
     // move stack pointer to frame pointer
     genRegReg("movq", sp, fp, "setup fp");
 
-    // allocate temporary variables
+    // allocate local variables
+    int localVarOffset = 8*(fun.getPosition()+1);
+    if (localVarOffset > 0) {
+      genRegReg("sub", "$"+localVarOffset, "%rsp", "allocate local variables");
+    }
 
     // genCodeStatement
     genCodeCompStmt(fun.getChildren().get(3));
 
     // deallocate temporary variables
+    if (localVarOffset > 0) {
+      genRegReg("add", "$"+localVarOffset, "%rsp", "deallocate local variables");
+    }
 
     // return
     gen("ret", "return from the function");
-  }
-
-  private void ret() {
-
   }
 
   private void genCodeCompStmt(TreeNode compStmt) {
@@ -222,9 +226,31 @@ public class BPLCodeGenerator {
 
   private void genCodeExpression(TreeNode exp) {
     if (exp.getChildren().get(0).getKind() == TreeNodeKind.ASSIGN_EXP) {
-      // genCodeAssignExp() do something else
+      genCodeAssignExp(exp.getChildren().get(0));
     } else {
       genCodeCompExp(exp.getChildren().get(0));
+    }
+  }
+
+  private void genCodeAssignExp(TreeNode assignExp) {
+    TreeNode var = assignExp.getChildren().get(0);
+    TreeNode exp = assignExp.getChildren().get(1);
+    genCodeExpression(exp);
+    genCodeVar(var);
+  }
+
+  private void genCodeVar(TreeNode var) {
+    TreeNode id = var.getChildren().get(0);
+    TreeNode varDec = var.getDec();
+
+    if (varDec.getDepth() == 0) {
+      genRegReg("mov", "%rax", id.getValue() , "perform global variable assignment");
+    } else if (varDec.getDepth() == 1) {
+      int offset = 16 + (8 * varDec.getPosition());
+      genRegReg("mov", "%rax", offset+"(%rbx)" , "perform param variable assignment");
+    } else {
+      int offset = -8 + (-8 * varDec.getPosition());
+      genRegReg("mov", "%rax", offset+"(%rbx)" , "perform local variable assignment");
     }
   }
 
@@ -384,6 +410,9 @@ public class BPLCodeGenerator {
     } else if (dec.getDepth() == 1) {
       int offset = 16 + 8*(dec.getPosition());
       genRegReg("movq", offset+"(%rbx)", "%rax", "putting param variable value into ac");
+    } else {
+      int offset = -8 + (-8*dec.getPosition());
+      genRegReg("movq", offset+"(%rbx)", "%rax", "putting local variable value into ac");
     }
   }
 
