@@ -178,12 +178,12 @@ public class BPLCodeGenerator {
   private void genCodeStatementList(TreeNode stmtList) {
     while (stmtList.getKind() != TreeNodeKind.EMPTY) {
       TreeNode stmt = stmtList.getChildren().get(1);
-      genCodeStatment(stmt);
+      genCodeStatement(stmt);
       stmtList = stmtList.getChildren().get(0);
     }
   }
 
-  private void genCodeStatment(TreeNode statement) {
+  private void genCodeStatement(TreeNode statement) {
     TreeNode stmt = statement.getChildren().get(0);
     if (stmt.getKind() == TreeNodeKind.EXPRESSION_STMT) {
       if (stmt.getChildren().size() > 0) {
@@ -192,14 +192,67 @@ public class BPLCodeGenerator {
     } else if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
       genCodeCompStmt(stmt);
     } else if (stmt.getKind() == TreeNodeKind.IF_STMT) {
-
+      genCodeIfStmt(stmt);
     } else if (stmt.getKind() == TreeNodeKind.WHILE_STMT) {
-
+      genCodeWhileStmt(stmt);
     } else if (stmt.getKind() == TreeNodeKind.RETURN_STMT) {
       genCodeReturn(stmt);
     } else if (stmt.getKind() == TreeNodeKind.WRITE_STMT) {
       genCodeWrite(stmt);
     }
+  }
+
+  private void genCodeIfStmt(TreeNode ifStmt) {
+    TreeNode exp = ifStmt.getChildren().get(0);
+    TreeNode stmt1 = null;
+    TreeNode stmt2 = null;
+
+    if (ifStmt.getChildren().size() > 1) {
+      stmt1 = ifStmt.getChildren().get(1);
+    }
+
+    if (ifStmt.getChildren().size() > 2) {
+      stmt2 = ifStmt.getChildren().get(2);
+    }
+
+    String label1 = ".L" + nextLabelNum();
+    String label2 = ".L" + nextLabelNum();
+
+    System.out.printf("%s:%n", label1);
+    genCodeExpression(exp);
+    genRegReg("cmpl", "$0", "%eax", "Test if condition is False");
+    genReg("je", label2, "Jump to " + label2 + " if False");
+
+    if (stmt1 != null) {
+      genCodeStatement(stmt1);
+    }
+
+    System.out.printf("%s:%n", label2);
+    if (stmt2 != null) {
+      genCodeStatement(stmt2);
+    }
+
+  }
+
+  private void genCodeWhileStmt(TreeNode whileStmt) {
+    TreeNode exp = whileStmt.getChildren().get(0);
+    TreeNode stmt = null;
+
+    if (whileStmt.getChildren().size() > 1) {
+      stmt = whileStmt.getChildren().get(1);
+    }
+    String label1 = ".L" + nextLabelNum();
+    String label2 = ".L" + nextLabelNum();
+
+    System.out.printf("%s:%n", label1);
+    genCodeExpression(exp);
+    genRegReg("cmpl", "$0", "%eax", "Test if condition is False");
+    genReg("je", label2, "Jump to " + label2 + " if False");
+    if (stmt != null) {
+      genCodeStatement(stmt);
+    }
+    genReg("jmp", label1, "Jump back to " + label1);
+    System.out.printf("%s:%n", label2);
   }
 
   private void genCodeReturn(TreeNode retStmt) {

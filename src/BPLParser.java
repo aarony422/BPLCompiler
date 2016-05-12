@@ -6,20 +6,20 @@ public class BPLParser {
 	private BPLScanner scanner;
 	private LinkedList<Token> tokenCache;
 	private int currLine;
-	
+
 	public BPLParser(String inputFileName) {
 		this.scanner = new BPLScanner(inputFileName);
 		this.tokenCache = new LinkedList<Token>();
 		this.currLine = 1;
 	}
-	
+
 	private TreeNode program() throws BPLParserException {
 		TreeNode program = new TreeNode(TreeNodeKind.PROGRAM, currLine, null);
 		TreeNode decList = declaractionList();
 		program.addChild(decList);
 		return program;
 	}
-	
+
 	private TreeNode declaractionList() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
@@ -33,7 +33,7 @@ public class BPLParser {
 		decList.addChild(dec);
 		return decList;
 	}
-	
+
 	private TreeNode declaration() throws BPLParserException {
 		TreeNode dec = new TreeNode(TreeNodeKind.DECLARATION, currLine, null);
 		Token token1 = getNextToken();
@@ -64,7 +64,7 @@ public class BPLParser {
 		}
 		return dec;
 	}
-	
+
 	private TreeNode varDec() throws BPLParserException {
 		int line = currLine;
 		TreeNode varDec = null;
@@ -97,11 +97,11 @@ public class BPLParser {
 		} else if (varDec.getKind() == TreeNodeKind.POINTER_VAR_DEC) {
 			varDec.addChild(id);
 		}
-		
+
 		assertToken(token, Kind.T_SEMICOLON, ";");
 		return varDec;
 	}
-	
+
 	private TreeNode localDecs() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
@@ -115,7 +115,7 @@ public class BPLParser {
 		localDecs.addChild(varDec);
 		return localDecs;
 	}
-	
+
 	private TreeNode statement() throws BPLParserException {
 		TreeNode statement = new TreeNode(TreeNodeKind.STATEMENT, currLine, null);
 		Token token = getNextToken();
@@ -139,7 +139,7 @@ public class BPLParser {
 		statement.addChild(stmt);
 		return statement;
 	}
-	
+
 	private TreeNode typeSpecifier() throws BPLParserException {
 		TreeNode typeSpecifier = new TreeNode(TreeNodeKind.TYPE_SPECIFIER, currLine, null);
 		Token token = getNextToken();
@@ -156,7 +156,7 @@ public class BPLParser {
 		typeSpecifier.addChild(type);
 		return typeSpecifier;
 	}
-	
+
 	private TreeNode funDec() throws BPLParserException {
 		TreeNode funDec = new TreeNode(TreeNodeKind.FUN_DEC, currLine, null);
 		TreeNode type = typeSpecifier();
@@ -175,7 +175,7 @@ public class BPLParser {
 		//assertToken(token, Kind.T_RBRACE, "}");
 		return funDec;
 	}
-	
+
 	private TreeNode params() throws BPLParserException {
 		TreeNode params = new TreeNode(TreeNodeKind.PARAMS, currLine, null);
 		Token token = getNextToken();
@@ -189,7 +189,7 @@ public class BPLParser {
 		}
 		return params;
 	}
-	
+
 	private TreeNode paramList() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
@@ -210,7 +210,7 @@ public class BPLParser {
 		paramList.addChild(param);
 		return paramList;
 	}
-	
+
 	private TreeNode param() throws BPLParserException {
 		int line = currLine;
 		TreeNode param = null;
@@ -237,13 +237,13 @@ public class BPLParser {
 		param.addChild(id);
 		return param;
 	}
-	
+
 	private TreeNode compoundStatement() throws BPLParserException {
 		Token token = getNextToken();
 		assertToken(token, Kind.T_LBRACE, "{");
 		token = getNextToken();
 		TreeNode compoundStmt = new TreeNode(TreeNodeKind.COMPOUND_STMT, currLine, null);
-		// Local decs start with Type specifier 
+		// Local decs start with Type specifier
 		if (token.getKind() == Kind.T_INT || token.getKind() == Kind.T_VOID || token.getKind() == Kind.T_STR) {
 			cacheToken(token);
 			TreeNode localDecs = localDecs();
@@ -254,12 +254,12 @@ public class BPLParser {
 			cacheToken(token);
 			TreeNode statementList = statementList();
 			token = getNextToken();
-			compoundStmt.addChild(statementList);			
+			compoundStmt.addChild(statementList);
 		}
 		assertToken(token, Kind.T_RBRACE, "}");
 		return compoundStmt;
 	}
-	
+
 	private TreeNode whileStatement() throws BPLParserException {
 		TreeNode whileStmt = new TreeNode(TreeNodeKind.WHILE_STMT, currLine, null);
 		Token token = getNextToken();
@@ -272,7 +272,7 @@ public class BPLParser {
 		whileStmt.addChild(stmt);
 		return whileStmt;
 	}
-	
+
 	private TreeNode ifStatement() throws BPLParserException {
 		TreeNode ifStmt = new TreeNode(TreeNodeKind.IF_STMT, currLine, null);
 		Token token = getNextToken();
@@ -292,7 +292,7 @@ public class BPLParser {
 		ifStmt.addChild(elseStmt);
 		return ifStmt;
 	}
-	
+
 	private TreeNode returnStatement() throws BPLParserException {
 		TreeNode returnStmt = new TreeNode(TreeNodeKind.RETURN_STMT, currLine, null);
 		Token token = getNextToken();
@@ -306,11 +306,11 @@ public class BPLParser {
 		returnStmt.addChild(expression);
 		return returnStmt;
 	}
-	
+
 	private TreeNode writeStatement() throws BPLParserException {
 		TreeNode writeStmt = new TreeNode(TreeNodeKind.WRITE_STMT, currLine, null);
 		Token token = getNextToken();
-		
+
 		if (token.getKind() == Kind.T_WRITE) {
 			token = getNextToken();
 			assertToken(token, Kind.T_LPAREN, "(");
@@ -330,14 +330,14 @@ public class BPLParser {
 		}
 		return writeStmt;
 	}
-	
+
 	private TreeNode statementList() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
 		if (token.getKind() == Kind.T_EOF) {
 			assertToken(token, Kind.T_RBRACE, "}");
 		}
-		
+
 		if (token.getKind() == Kind.T_RBRACE) {
 			//cacheToken(token);
 			return new TreeNode(TreeNodeKind.EMPTY, currLine, null);
@@ -349,7 +349,7 @@ public class BPLParser {
 		statementList.addChild(statement);
 		return statementList;
 	}
-	
+
 	private TreeNode expressionStatement() throws BPLParserException {
 		TreeNode expressionStmt = new TreeNode(TreeNodeKind.EXPRESSION_STMT, currLine, null);
 		Token token = getNextToken();
@@ -365,7 +365,7 @@ public class BPLParser {
 		expressionStmt.addChild(expression);
 		return expressionStmt;
 	}
-	
+
 	private TreeNode expression() throws BPLParserException {
 		TreeNode expression = new TreeNode(TreeNodeKind.EXPRESSION, currLine, null);
 		boolean isComp = false;
@@ -392,7 +392,7 @@ public class BPLParser {
 				if (token.getKind() == Kind.T_RPAREN) {
 					assertToken(parenStack.pop(), Kind.T_LPAREN, "]");
 				} else { //token.getKind() == Kind.T_RBRACKET
-					assertToken(parenStack.pop(), Kind.T_LBRACKET, ")"); 
+					assertToken(parenStack.pop(), Kind.T_LBRACKET, ")");
 				}
 			} else if (token.getKind() == Kind.T_LPAREN || token.getKind() == Kind.T_LBRACKET) {
 				parenStack.push(token);
@@ -403,7 +403,7 @@ public class BPLParser {
 		for (Token t : seenTokens) {
 			cacheToken(t);
 		}
-		
+
 		if (isComp) {
 			TreeNode compExp = compExp();
 			expression.addChild(compExp);
@@ -413,7 +413,7 @@ public class BPLParser {
 		}
 		return expression;
 	}
-	
+
 	private TreeNode assignmentExpression() throws BPLParserException {
 		TreeNode assignExp = new TreeNode(TreeNodeKind.ASSIGN_EXP, currLine, null);
 		TreeNode var = var();
@@ -424,7 +424,7 @@ public class BPLParser {
 		assignExp.addChild(expression);
 		return assignExp;
 	}
-		
+
 	private TreeNode var() throws BPLParserException {
 		int line = currLine;
 		TreeNode var = null;
@@ -436,7 +436,7 @@ public class BPLParser {
 		}
 		TreeNode id = id();
 		token = getNextToken();
-		
+
 		if (token.getKind() == Kind.T_LBRACKET) {
 			var = new TreeNode(TreeNodeKind.ARRAY_VAR, line, null);
 			TreeNode exp = expression();
@@ -447,7 +447,7 @@ public class BPLParser {
 		} else {
 			cacheToken(token);
 		}
-		
+
 		if (var == null) {
 			var = new TreeNode(TreeNodeKind.VAR, line, null);
 		}
@@ -456,7 +456,7 @@ public class BPLParser {
 		}
 		return var;
 	}
-	
+
 	private TreeNode compExp() throws BPLParserException {
 		TreeNode comExp = new TreeNode(TreeNodeKind.COMP_EXP, currLine, null);
 		TreeNode E = E();
@@ -477,7 +477,7 @@ public class BPLParser {
 		}
 		return comExp;
 	}
-	
+
 	private TreeNode E() throws BPLParserException {
 		TreeNode E = new TreeNode(TreeNodeKind.E, currLine, null);
 		TreeNode T = T();
@@ -497,7 +497,7 @@ public class BPLParser {
 		cacheToken(token);
 		return E;
 	}
-	
+
 	private TreeNode T() throws BPLParserException {
 		TreeNode T = new TreeNode(TreeNodeKind.T, currLine, null);
 		TreeNode F = F();
@@ -517,7 +517,7 @@ public class BPLParser {
 		cacheToken(token);
 		return T;
 	}
-	
+
 	private TreeNode F() throws BPLParserException {
 		TreeNode F = null;
 		Token token = getNextToken();
@@ -543,11 +543,11 @@ public class BPLParser {
 		}
 		return F;
 	}
-	
+
 	private TreeNode factor() throws BPLParserException {
 		TreeNode factor = null;
 		Token token = getNextToken();
-		
+
 		if (token.getKind() == Kind.T_READ) {
 			factor = new TreeNode(TreeNodeKind.FACTOR, currLine, null);
 			token = getNextToken();
@@ -597,15 +597,14 @@ public class BPLParser {
 			assertToken(token, Kind.T_RPAREN, ")");
 			//cacheToken(token);
 			factor.addChild(exp);
-		} else { 
-			System.out.println("Something Went Wrong");
-			System.exit(1);
+		} else {
+			throw new BPLParserException("Parser Error: Expected " + "<EXPRESSION>" + " but got " + token.getKind() + " on line " + token.getLine());
 		}
 		//System.out.println("Current Token: " + token);
 		//printCache();
 		return factor;
 	}
-	
+
 	private TreeNode funCall() throws BPLParserException {
 		TreeNode funCall = new TreeNode(TreeNodeKind.FUN_CALL, currLine, null);
 		TreeNode id = id();
@@ -618,7 +617,7 @@ public class BPLParser {
 		funCall.addChild(args);
 		return funCall;
 	}
-	
+
 	private TreeNode args() throws BPLParserException {
 		TreeNode args = new TreeNode(TreeNodeKind.ARGS, currLine, null);
 		Token token = getNextToken();
@@ -633,7 +632,7 @@ public class BPLParser {
 		}
 		return args;
 	}
-	
+
 	private TreeNode argList() throws BPLParserException {
 		Token token = getNextToken();
 		cacheToken(token);
@@ -659,19 +658,19 @@ public class BPLParser {
 		assertToken(token, Kind.T_ID, "<id>");
 		return new TreeNode(TreeNodeKind.ID, currLine, token.getValue());
 	}
-	
+
 	private TreeNode num() throws BPLParserException {
 		Token token = getNextToken();
 		assertToken(token, Kind.T_NUM, "<num>");
 		return new TreeNode(TreeNodeKind.NUM, currLine, token.getValue());
 	}
-	
+
 	private TreeNode string() throws BPLParserException {
 		Token token = getNextToken();
 		assertToken(token, Kind.T_STRING, "<string>");
 		return new TreeNode(TreeNodeKind.STR, currLine, token.getValue());
 	}
-	
+
 	private TreeNode relop() throws BPLParserException {
 		TreeNode relop = new TreeNode(TreeNodeKind.RELOP, currLine, null);
 		Token token = getNextToken();
@@ -685,7 +684,7 @@ public class BPLParser {
 		}
 		return relop;
 	}
-	
+
 	private TreeNode addop() throws BPLParserException {
 		TreeNode addop = new TreeNode(TreeNodeKind.ADDOP, currLine, null);
 		Token token = getNextToken();
@@ -698,12 +697,12 @@ public class BPLParser {
 		}
 		return addop;
 	}
-	
+
 	private TreeNode mulop() throws BPLParserException {
 		TreeNode mulop = new TreeNode(TreeNodeKind.MULOP, currLine, null);
 		Token token = getNextToken();
 		Kind tokenKind = token.getKind();
-		if (tokenKind == Kind.T_ASTERISK || tokenKind == Kind.T_FSLASH 
+		if (tokenKind == Kind.T_ASTERISK || tokenKind == Kind.T_FSLASH
 				|| tokenKind == Kind.T_PERCENT) {
 			TreeNode arthmop = new TreeNode(TreeNodeKind.ARITHM_OP, currLine, token.getValue());
 			mulop.addChild(arthmop);
@@ -712,14 +711,14 @@ public class BPLParser {
 		}
 		return mulop;
 	}
-	
+
 	private boolean assertToken(Token t, Kind expectedKind, String expectedString) throws BPLParserException {
 		if (t.getKind() != expectedKind) {
 			throw new BPLParserException("Parser Error: Expected " + expectedString + " but got " + t.getKind() + " on line " + t.getLine());
 		}
 		return true;
 	}
-	
+
 	public TreeNode parse() throws BPLParserException {
 		//getNextToken();
 		TreeNode node = program();
@@ -728,7 +727,7 @@ public class BPLParser {
 		}
 		return node;
 	}
-	
+
 	private Token getNextToken() throws BPLParserException {
 		if (tokenCache.size() > 0) {
 			Token token = tokenCache.remove();
@@ -743,8 +742,8 @@ public class BPLParser {
 		currLine = scanner.nextToken.getLine();
 		return scanner.nextToken;
 	}
-	
-	private void cacheToken(Token t) throws BPLParserException {		
+
+	private void cacheToken(Token t) throws BPLParserException {
 		int index = 0;
 		int size = tokenCache.size();
 		for (; index < size; index++) {
@@ -754,18 +753,18 @@ public class BPLParser {
 		}
 		tokenCache.add(index, t);
 	}
-	
+
 	private void printCache() {
 		System.out.println("Current Token Cache:");
 		for (Token t : tokenCache) {
 			System.out.println(t);
 		}
 	}
-	
+
 	private void printStack(Stack<Token> stack) {
 		for (Token t : stack) {
 			System.out.println(t);
 		}
 	}
-	
+
 }

@@ -1,16 +1,21 @@
-string x;
+
+/*
+int x;
 
 int f(string z) {
   write(z);
   return 100;
 }
-
+*/
 
 void main() {
   int y;
-  x = "hello";
-  y = f(x);
-  write(y);
+  y = 5;
+  if (y != 5) {
+    write("I WIN");
+  } else {
+    write("I ALSO WIN");
+  }
 }
 
 
