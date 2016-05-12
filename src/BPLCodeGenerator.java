@@ -237,7 +237,7 @@ public class BPLCodeGenerator {
     if (stmt1 != null) {
       genCodeStatement(stmt1);
     }
-    genReg("jmp", label3, "Jump to " + label3 + " if after True Statement");
+    genReg("jmp", label3, "Jump to " + label3 + " after True Statement");
 
     System.out.printf("%s:%n", label2);
     if (stmt2 != null) {
@@ -413,7 +413,8 @@ public class BPLCodeGenerator {
 
   private void genCodeF(TreeNode F) {
     if (F.getKind() == TreeNodeKind.NEG_F) {
-      // -F genCodeF(F.getChildren().get(0));
+      genCodeF(F.getChildren().get(0));
+      genReg("neg", "%eax", "negating the value");
     } else {
       if (F.getKind() == TreeNodeKind.ADDRESS_F || F.getKind() == TreeNodeKind.DEREF_F) {
         // genCodeFactor(F)
