@@ -1,24 +1,16 @@
 string x;
 
-void f(string z) {
-
-  int y;
-  /*
-  int z[10];
-  int *a;
-  */
-
-  /*
-  z[0] = 7;
-  *a = 4;
-  */
+int f(string z) {
   write(z);
+  return 100;
 }
 
 
 void main() {
+  int y;
   x = "hello";
-  f(x);
+  y = f(x);
+  write(y);
 }
 
 

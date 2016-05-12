@@ -157,7 +157,8 @@ public class BPLCodeGenerator {
 
     // deallocate temporary variables
     if (localVarOffset > 0) {
-      genRegReg("add", "$"+localVarOffset, "%rsp", "deallocate local variables");
+      //genRegReg("add", "$"+localVarOffset, "%rsp", "deallocate local variables");
+      genRegReg("movq", "%rbx", "%rsp", "deallocate local variables");
     }
 
     // return
@@ -195,9 +196,15 @@ public class BPLCodeGenerator {
     } else if (stmt.getKind() == TreeNodeKind.WHILE_STMT) {
 
     } else if (stmt.getKind() == TreeNodeKind.RETURN_STMT) {
-
+      genCodeReturn(stmt);
     } else if (stmt.getKind() == TreeNodeKind.WRITE_STMT) {
       genCodeWrite(stmt);
+    }
+  }
+
+  private void genCodeReturn(TreeNode retStmt) {
+    if (retStmt.getChildren().size() > 0) {
+      genCodeExpression(retStmt.getChildren().get(0));
     }
   }
 
