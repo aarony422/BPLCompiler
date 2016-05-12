@@ -118,10 +118,10 @@ public class BPLCodeGenerator {
       } else if (dec.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
         String id = dec.getChildren().get(1).getValue();
         String arrayLen = dec.getChildren().get(2).getValue();
-        System.out.printf("%s%n", ".comm " + id + ", " + 8* Integer.parseInt(arrayLen));
+        System.out.printf("%s%n", ".comm " + id + ", " + 8* Integer.parseInt(arrayLen) + ", 32");
       } else {
         String id = dec.getChildren().get(1).getValue();
-        System.out.printf("%s%n", ".comm " + id + ", 8");
+        System.out.printf("%s%n", ".comm " + id + ", 8, 32");
       }
       declist = declist.getChildren().get(0);
     }

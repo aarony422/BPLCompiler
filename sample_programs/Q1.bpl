@@ -7,9 +7,12 @@ int f(string z) {
   return 100;
 }
 */
-
+int x;
+int z[10];
 void main() {
+  int *a;
   int y;
+  a = &z[4];
   y = 5;
   if (y != 5) {
     write("I WIN");

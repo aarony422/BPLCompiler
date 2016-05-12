@@ -12,6 +12,6 @@ else
 	cd bin
 	java BPLCodeGenerator "../"$1 > "../"$filename
 	chmod 755 "../"$filename
-	gcc -o "../"$filename2 "../"$filename
+	gcc -o "../"$filename2 -g "../"$filename
 	rm "../"$filename
 fi
