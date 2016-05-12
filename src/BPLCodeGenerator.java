@@ -58,6 +58,7 @@ public class BPLCodeGenerator {
         findDepthsStatementList(t, depth, pos);
       }
     }
+    compoundStmt.setPosition(pos-position-1);
     return pos;
   }
 
@@ -66,6 +67,15 @@ public class BPLCodeGenerator {
       TreeNode stmt = statementList.getChildren().get(1).getChildren().get(0);
       if (stmt.getKind() == TreeNodeKind.COMPOUND_STMT) {
         findDepthsCompoundStmt(stmt, depth+1, position);
+      } else if (stmt.getKind() == TreeNodeKind.IF_STMT || stmt.getKind() == TreeNodeKind.WHILE_STMT) {
+        for (TreeNode t : stmt.getChildren()) {
+          if (t.getKind() == TreeNodeKind.STATEMENT) {
+            TreeNode s = t.getChildren().get(0);
+            if (s.getKind() == TreeNodeKind.COMPOUND_STMT) {
+              findDepthsCompoundStmt(s, depth+1, position);
+            }
+          }
+        }
       }
       statementList = statementList.getChildren().get(0);
     }
@@ -146,32 +156,32 @@ public class BPLCodeGenerator {
     // move stack pointer to frame pointer
     genRegReg("movq", sp, fp, "setup fp");
 
-    // allocate local variables
-    int localVarOffset = 8*(fun.getPosition()+1);
-    if (localVarOffset > 0) {
-      genRegReg("sub", "$"+localVarOffset, "%rsp", "allocate local variables");
-    }
-
-    // genCodeStatement
+    // genCodeStatement, and allocate local variables
     genCodeCompStmt(fun.getChildren().get(3));
 
-    // deallocate temporary variables
-    if (localVarOffset > 0) {
-      //genRegReg("add", "$"+localVarOffset, "%rsp", "deallocate local variables");
-      genRegReg("movq", "%rbx", "%rsp", "deallocate local variables");
-    }
+    // deallocate any remaining local variables
+    genRegReg("movq", "%rbx", "%rsp", "deallocate any remaining local variables");
 
     // return
     gen("ret", "return from the function");
   }
 
   private void genCodeCompStmt(TreeNode compStmt) {
+    // allocate local variables
+    int localVarOffset = 8*(compStmt.getPosition()+1);
+    if (localVarOffset > 0) {
+      genRegReg("sub", "$"+localVarOffset, "%rsp", "allocate local variables");
+    }
+
     for (TreeNode t : compStmt.getChildren()) {
-      if (t.getKind() == TreeNodeKind.LOCAL_DECS) {
-        // genCodeLocalDecs(t);
-      } else if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
+      if (t.getKind() == TreeNodeKind.STATEMENT_LIST) {
         genCodeStatementList(t);
       }
+    }
+
+    // deallocate temporary variables
+    if (localVarOffset > 0) {
+      genRegReg("add", "$"+localVarOffset, "%rsp", "deallocate local variables");
     }
   }
 
@@ -217,6 +227,7 @@ public class BPLCodeGenerator {
 
     String label1 = ".L" + nextLabelNum();
     String label2 = ".L" + nextLabelNum();
+    String label3 = ".L" + nextLabelNum();
 
     System.out.printf("%s:%n", label1);
     genCodeExpression(exp);
@@ -226,11 +237,14 @@ public class BPLCodeGenerator {
     if (stmt1 != null) {
       genCodeStatement(stmt1);
     }
+    genReg("jmp", label3, "Jump to " + label3 + " if after True Statement");
 
     System.out.printf("%s:%n", label2);
     if (stmt2 != null) {
       genCodeStatement(stmt2);
     }
+
+    System.out.printf("%s:%n", label3);
 
   }
 
