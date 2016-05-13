@@ -7,17 +7,13 @@ public class BPLTypeChecker {
   private BPLParser parser;
   private TreeNode root;
 
-  public BPLTypeChecker(String inputFileName, boolean debug) {
+  public BPLTypeChecker(String inputFileName, boolean debug) throws BPLTypeCheckerException, BPLParserException {
     this.debug = debug;
     this.globalDecs = new HashMap<String, TreeNode>();
     parser = new BPLParser(inputFileName);
     root = null;
 
-    try {
-      root = parser.parse();
-    } catch (BPLParserException e) {
-      e.printStackTrace();
-    }
+    root = parser.parse();
   }
 
   public void runTypeChecker() throws BPLTypeCheckerException {
@@ -151,7 +147,9 @@ public class BPLTypeChecker {
     if (writeStmt.getChildren().size() == 0) {
       return;
     }
-    findReferencesExpression(writeStmt.getChildren().get(0), localDecs);
+    Type expType = findReferencesExpression(writeStmt.getChildren().get(0), localDecs);
+    Type[] expected = {Type.INT, Type.STRING};
+    assertType(expType, expected, writeStmt.getLine());
   }
 
   private Type findReferencesExpression(TreeNode exp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {

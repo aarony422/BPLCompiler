@@ -7,10 +7,14 @@ else
 
 	execname=${1%.bpl}
 	filename="./"${execname##*/}".s"
-  filename2="./"${execname##*/}
+	filename2="./"${execname##*/}
 	javac -d bin src/*.java
 	cd bin
 	java BPLCodeGenerator "../"$1 > "../"$filename
+	if [ $? -ne 0 ]; then
+		rm ../$filename
+		exit 1
+	fi
 	chmod 755 "../"$filename
 	gcc -o "../"$filename2 -g "../"$filename
 	rm "../"$filename

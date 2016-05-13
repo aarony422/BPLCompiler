@@ -7,10 +7,20 @@ void fun(string x[]) {
 }
 */
 
+int fuckRight(int lol[]) {
+  write("FUCK TO THE RIGHT");
+  write(lol[5]);
+}
+
+int fuckLeft(int lol[]) {
+  write("FUCK TO THE LEFT");
+  fuckRight(lol);
+}
+
+int *x;
+
 void main() {
-  int *y;
-  int x;
-  x = 5;
-  y = &x;
-  fun(x);
+  int y[10];
+  y[5] = 69;
+  fuckLeft(y);
 }

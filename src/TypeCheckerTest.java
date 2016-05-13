@@ -1,7 +1,7 @@
 
 public class TypeCheckerTest {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws BPLTypeCheckerException, BPLParserException {
     // TODO Auto-generated method stub
     //String inputFileName = "sample_programs/selectionSort.bpl";
     //String inputFileName = "sample_programs/P10.bpl";
