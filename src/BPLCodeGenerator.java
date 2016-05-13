@@ -323,6 +323,12 @@ public class BPLCodeGenerator {
             genRegReg("addq", "%rax", "%rdi", "calculating element address");
             genReg("pop", "%rax", "retrieve right hand value from stack");
             genRegReg("movq", "%rax", "0(%rdi)", "assigning array value");
+        } else if (var.getKind() == TreeNodeKind.POINTER_VAR) {
+          genReg("push", "%rax", "push right hand value on stack");
+          genCodeID(id);
+          genReg("pop", "%rdi", "retrieving offset from stack");
+          genRegReg("movq", "%rdi", "0(%rax)", "assigning pointer value");
+
         } else {
             if (varDec.getDepth() == 0) {
                 genRegReg("mov", "%rax", id.getValue() , "perform global variable assignment");

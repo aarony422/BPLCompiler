@@ -33,12 +33,24 @@ void sort( int A[], int first, int last) {
 
 void main(void) {
     int i;
-
+    /*
     i = 0;
     while (i < 10) {
         x[i] = read();
         i = i+1;
     }
+    */
+    x[0] = 60;
+    x[1] = -5;
+    x[2] = 9;
+    x[3] = 17;
+    x[4] = 23;
+    x[5] = -1;
+    x[6] = 0;
+    x[7] = 35;
+    x[8] = -75;
+    x[9] = 6;
+
     sort(x,0,10);
     i = 0;
     while (i<10) {

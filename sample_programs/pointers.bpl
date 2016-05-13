@@ -8,7 +8,8 @@ void main(void) {
     int *b;
     b = &a;
     a = 4;
-    f( b );
+    /* f( b ); */
+    *b = 23;
     write(a);
     writeln();
 }
