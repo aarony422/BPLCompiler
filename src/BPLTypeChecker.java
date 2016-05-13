@@ -157,7 +157,7 @@ public class BPLTypeChecker {
   private Type findReferencesExpression(TreeNode exp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
     Type expressionType = Type.NONE;
     if (exp.getChildren().get(0).getKind() == TreeNodeKind.ASSIGN_EXP) {
-      findReferencesAssignExp(exp.getChildren().get(0), localDecs);
+      expressionType = findReferencesAssignExp(exp.getChildren().get(0), localDecs);
     } else {
       expressionType = findReferencesCompExp(exp.getChildren().get(0), localDecs);
     }
@@ -253,6 +253,7 @@ public class BPLTypeChecker {
         System.out.println(factor.getChildren().get(0).getValue() + "[<expression>]" + " assigned Type " + factorType + " on line " + factor.getLine());
       }
 
+
     } else if (factor.getKind() == TreeNodeKind.ADDRESS_F) {
       factorType = findReferencesFactor(fac, localDecs);
       Type[] expected = {Type.INT, Type.STRING};
@@ -286,7 +287,7 @@ public class BPLTypeChecker {
       factorType = findReferencesID(fac, localDecs, fac.getValue());
       factor.setValue(fac.getValue());
     } else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
-      findReferencesExpression(fac, localDecs);
+      factorType = findReferencesExpression(fac, localDecs);
     } else if (fac.getKind() == TreeNodeKind.FUN_CALL) {
       Type funRtnType = findReferencesID(fac.getChildren().get(0), localDecs, fac.getChildren().get(0).getValue());
       findReferencesArgs(fac.getChildren().get(1), localDecs, fac.getChildren().get(0).getDec());
@@ -354,7 +355,7 @@ public class BPLTypeChecker {
     return paramType;
   }
 
-  private void findReferencesAssignExp(TreeNode assignExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
+  private Type findReferencesAssignExp(TreeNode assignExp, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
     Type varType = findReferencesVar(assignExp.getChildren().get(0), localDecs);
     Type expType = findReferencesExpression(assignExp.getChildren().get(1), localDecs);
 
@@ -365,8 +366,9 @@ public class BPLTypeChecker {
       assertType(expType, Type.STRING_ADDRESS, assignExp.getLine());
     } else {
       assertType(expType, varType, assignExp.getLine());
+      assignExp.setType(expType);
     }
-
+    return expType;
   }
 
   private Type findReferencesVar(TreeNode var, LinkedList<TreeNode> localDecs) throws BPLTypeCheckerException {
@@ -374,6 +376,7 @@ public class BPLTypeChecker {
     TreeNode ID = var.getChildren().get(0);
     String id = ID.getValue();
     varType = findReferencesID(var, localDecs, id);
+    ID.setDec(var.getDec());
     if (var.getKind() == TreeNodeKind.ARRAY_VAR) {
       Type expType = findReferencesExpression(var.getChildren().get(1), localDecs);
       assertType(expType, Type.INT, var.getLine());

@@ -315,16 +315,28 @@ public class BPLCodeGenerator {
 
   private void genCodeVar(TreeNode var) {
     TreeNode id = var.getChildren().get(0);
-    TreeNode varDec = var.getDec();
-
-    if (varDec.getDepth() == 0) {
-      genRegReg("mov", "%rax", id.getValue() , "perform global variable assignment");
-    } else if (varDec.getDepth() == 1) {
-      int offset = 16 + (8 * varDec.getPosition());
-      genRegReg("mov", "%rax", offset+"(%rbx)" , "perform param variable assignment");
+    TreeNode varDec = id.getDec();
+    if (var.getKind() == TreeNodeKind.ARRAY_VAR) {
+      genReg("push", "%rax", "push right hand value on stack");
+      TreeNode exp = var.getChildren().get(1);
+      genCodeExpression(exp);
+      genRegReg("imul", "$8", "%rax", "calculating offset");
+      genReg("push", "%rax", "push array offset on stack");
+      genCodeID(id);
+      genReg("pop", "%rdi", "retrieving offset from stack");
+      genRegReg("addq", "%rax", "%rdi", "calculating element address");
+      genReg("pop", "%rax", "retrieve right hand value from stack");
+      genRegReg("movq", "%rax", "0(%rdi)", "assigning array value");
     } else {
-      int offset = -8 + (-8 * varDec.getPosition());
-      genRegReg("mov", "%rax", offset+"(%rbx)" , "perform local variable assignment");
+      if (varDec.getDepth() == 0) {
+        genRegReg("mov", "%rax", id.getValue() , "perform global variable assignment");
+      } else if (varDec.getDepth() == 1) {
+        int offset = 16 + (8 * varDec.getPosition());
+        genRegReg("mov", "%rax", offset+"(%rbx)" , "perform param variable assignment");
+      } else {
+        int offset = -8 + (-8 * varDec.getPosition());
+        genRegReg("mov", "%rax", offset+"(%rbx)" , "perform local variable assignment");
+      }
     }
   }
 
@@ -417,7 +429,7 @@ public class BPLCodeGenerator {
       genReg("neg", "%eax", "negating the value");
     } else {
       if (F.getKind() == TreeNodeKind.ADDRESS_F || F.getKind() == TreeNodeKind.DEREF_F) {
-        // genCodeFactor(F)
+        genCodeFactor(F);
       } else {
         genCodeFactor(F.getChildren().get(0));
       }
@@ -427,9 +439,13 @@ public class BPLCodeGenerator {
   private void genCodeFactor(TreeNode factor) {
     TreeNode fac = factor.getChildren().get(0);
     if (factor.getKind() == TreeNodeKind.ARRAY_FACTOR) {
-      // ID(factor.getChildren().get(0));
-      // genCodeExpression(factor.getChildren().get(1));
-
+      genCodeID(factor.getChildren().get(0));
+      genReg("push", "%rax", "Save the starting address of array on stack");
+      genCodeExpression(factor.getChildren().get(1));
+      genRegReg("imul", "$8", "%rax", "multiply index by 8");
+      genReg("pop", "%rsi", "Retrieving base address of array");
+      genRegReg("add", "%rax", "%rsi", "address of desired array index");
+      genRegReg("movl", "0(%rsi)", "%eax", "obtaining array index value");
     } else if (factor.getKind() == TreeNodeKind.ADDRESS_F) {
       // genCodeFactor(fac);
 
@@ -438,7 +454,6 @@ public class BPLCodeGenerator {
 
     } else if (fac.getKind() == TreeNodeKind.ID) {
       genCodeID(fac);
-
     } else if (fac.getKind() == TreeNodeKind.EXPRESSION) {
       genCodeExpression(fac);
 
@@ -481,13 +496,22 @@ public class BPLCodeGenerator {
     TreeNode dec = id.getDec();
     String label = id.getValue();
     if (dec.getDepth() == 0) {
-      genRegReg("movq", label, "%rax", "putting global variable value into ac");
+      if (dec.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
+        genRegReg("leaq", label, "%rax", "putting global array base address into ac");
+      } else {
+        genRegReg("movq", label, "%rax", "putting global variable value into ac");
+      }
+
     } else if (dec.getDepth() == 1) {
       int offset = 16 + 8*(dec.getPosition());
       genRegReg("movq", offset+"(%rbx)", "%rax", "putting param variable value into ac");
     } else {
       int offset = -8 + (-8*dec.getPosition());
-      genRegReg("movq", offset+"(%rbx)", "%rax", "putting local variable value into ac");
+      if (dec.getKind() == TreeNodeKind.ARRAY_VAR_DEC) {
+        genRegReg("leaq", offset+"(%rbx)", "%rax", "putting local array base address into ac");
+      } else {
+        genRegReg("movq", offset+"(%rbx)", "%rax", "putting local variable value into ac");
+      }
     }
   }
 
